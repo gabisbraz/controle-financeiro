@@ -1,59 +1,136 @@
-# ControleFinanceiro
+# 💰 Controle Financeiro Pessoal
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.19.
+Sistema web completo para gerenciamento de finanças pessoais, permitindo registrar entradas e saídas de dinheiro com visualização em dashboards interativos.
 
-## Development server
+## ✅ Funcionalidades Implementadas
 
-To start a local development server, run:
+### Página Principal (Registros)
+- ✅ Formulário para cadastro de **Entradas** (receitas)
+  - Categoria (Salário, 13º Salário, Bônus, Pagamento, Freelance, Investimentos, Outros)
+  - Valor
+  - Data
+  - Descrição (opcional)
+  
+- ✅ Formulário para cadastro de **Saídas** (despesas)
+  - Loja/Estabelecimento
+  - Categoria (Transporte, Alimentação, Autocuidado, Moradia, Saúde, Educação, Lazer, Vestuário, Outros)
+  - Descrição
+  - Valor
+  - Tipo de Pagamento (PIX, Crédito, Débito, Dinheiro, Boleto)
+  - Data
 
-```bash
-ng serve
+- ✅ Cartões resumo com:
+  - Total de Entradas
+  - Total de Saídas
+  - Saldo atual
+
+- ✅ Tabela de Entradas com visualização completa
+- ✅ Tabela de Saídas com visualização completa
+- ✅ Exclusão de registros com modal de confirmação
+- ✅ Notificações toast para feedback das ações
+
+### Página de Dashboard
+- ✅ Filtros por período:
+  - Todos os registros
+  - Este mês
+  - Este trimestre
+  - Este ano
+  - Período personalizado (datas inicial e final)
+
+- ✅ Cartões resumo com:
+  - Total de Entradas
+  - Total de Saídas
+  - Saldo
+  - Taxa de Economia
+
+- ✅ **Gráficos interativos:**
+  - 📊 Entradas vs Saídas por Mês (barras)
+  - 📈 Fluxo de Caixa Acumulado (linha)
+  - 🍩 Saídas por Categoria (donut)
+  - 🍩 Entradas por Categoria (donut)
+  - 🥧 Saídas por Tipo de Pagamento (pizza)
+  - 📊 Top 10 Lojas com Mais Gastos (barras horizontais)
+
+- ✅ Tabela com últimas 15 transações
+
+## 📁 Estrutura do Projeto
+
+```
+/
+├── index.html          # Página principal (registros)
+├── dashboard.html      # Página de dashboards
+├── css/
+│   └── style.css       # Estilos customizados
+├── js/
+│   ├── main.js         # JavaScript da página principal
+│   └── dashboard.js    # JavaScript do dashboard
+└── README.md           # Documentação
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## 🔗 URIs Funcionais
 
-## Code scaffolding
+| Página | Caminho | Descrição |
+|--------|---------|-----------|
+| Registros | `/index.html` | Página principal para cadastro e visualização |
+| Dashboard | `/dashboard.html` | Gráficos e análises financeiras |
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## 📊 Modelos de Dados
 
-```bash
-ng generate component component-name
-```
+### Tabela: `entradas`
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| id | text | ID único |
+| categoria | text | Categoria da entrada |
+| valor | number | Valor monetário |
+| data | datetime | Data da entrada |
+| descricao | text | Descrição opcional |
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+### Tabela: `saidas`
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| id | text | ID único |
+| loja | text | Nome da loja |
+| categoria | text | Categoria da saída |
+| descricao | text | Descrição da compra |
+| valor | number | Valor monetário |
+| tipo_pagamento | text | Tipo de pagamento |
+| data | datetime | Data da saída |
 
-```bash
-ng generate --help
-```
+## 🛠️ Tecnologias Utilizadas
 
-## Building
+- **HTML5** - Estrutura semântica
+- **Tailwind CSS** - Framework CSS utilitário
+- **JavaScript ES6+** - Lógica e interatividade
+- **Chart.js** - Gráficos interativos
+- **Font Awesome** - Ícones
+- **Google Fonts (Inter)** - Tipografia
 
-To build the project run:
+## 🚀 Como Usar
 
-```bash
-ng build
-```
+1. Acesse a página principal (`index.html`)
+2. Use os formulários para registrar entradas e saídas
+3. Visualize os registros nas tabelas abaixo dos formulários
+4. Clique em "Dashboard" no menu para ver os gráficos
+5. Use os filtros de período para analisar diferentes intervalos de tempo
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+## 📱 Responsividade
 
-## Running unit tests
+O sistema é totalmente responsivo e funciona em:
+- ✅ Desktop
+- ✅ Tablet
+- ✅ Mobile
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+## 🔜 Próximos Passos (Melhorias Futuras)
 
-```bash
-ng test
-```
+- [ ] Edição de registros existentes
+- [ ] Exportação de dados (CSV/PDF)
+- [ ] Metas financeiras mensais
+- [ ] Categorias personalizadas
+- [ ] Importação de extratos bancários
+- [ ] Gráfico de evolução patrimonial
+- [ ] Alertas de gastos por categoria
+- [ ] Modo escuro
 
-## Running end-to-end tests
+## 📝 Licença
 
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Este projeto é de uso pessoal e livre para modificações.
