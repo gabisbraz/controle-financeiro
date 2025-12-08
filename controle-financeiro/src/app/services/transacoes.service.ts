@@ -26,7 +26,7 @@ export class TransacoesService {
 
     if (raw) {
       list = JSON.parse(raw);
-      const maxId = list.reduce((m, t) => Math.max(m, t.id), 0);
+      const maxId = list.reduce((m, t) => Math.max(m, t.id || 0), 0);
       this.nextId = maxId + 1;
     }
 

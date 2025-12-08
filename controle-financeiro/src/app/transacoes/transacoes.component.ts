@@ -31,9 +31,13 @@ export class TransacoesComponent {
   categoria = '';
   valor: number | null = null;
   data: string = new Date().toISOString().slice(0, 10);
+  loja = '';
+  descricao = '';
+  tipoPagamento: string = '';
 
   categoriasEntrada = ['salário', 'juros', 'bônus', '13', 'pagamento externo'];
-  categoriasSaida = ['alimentação', 'contas', 'lazer', 'saúde', 'transporte'];
+  categoriasSaida = ['alimentacao', 'transporte', 'roupa', 'autocuidado', 'presente', 'pagamento'];
+  tiposPagamento = ['credito', 'debito', 'pix'];
 
   constructor(private service: TransacoesService) {}
 
@@ -47,16 +51,27 @@ export class TransacoesComponent {
       return;
     }
 
-    this.service.adicionarTransacao({
+    const transacao: Transacao = {
       tipo: this.tipo,
       categoria: this.categoria,
       valor: this.valor,
       data: this.data
-    });
+    };
+
+    if (this.tipo === 'saida') {
+      transacao.loja = this.loja;
+      transacao.descricao = this.descricao;
+      transacao.tipoPagamento = this.tipoPagamento as any;
+    }
+
+    this.service.adicionarTransacao(transacao);
 
     this.valor = null;
     this.categoria = '';
     this.data = new Date().toISOString().slice(0, 10);
+    this.loja = '';
+    this.descricao = '';
+    this.tipoPagamento = '';
   }
 
   remover(id: number) {

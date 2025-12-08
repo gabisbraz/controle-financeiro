@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
+import { NgxEchartsModule } from 'ngx-echarts';
 import { TransacoesService } from '../services/transacoes.service';
 import { EChartsOption } from 'echarts';
-import { NgxEchartsModule } from 'ngx-echarts';
 
 @Component({
   selector: 'app-dashboard',

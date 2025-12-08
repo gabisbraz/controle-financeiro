@@ -30,6 +30,25 @@
       <input matInput type="date" [(ngModel)]="data">
     </mat-form-field>
 
+    <mat-form-field appearance="outline" class="campo" *ngIf="tipo === 'saida'">
+      <mat-label>Loja</mat-label>
+      <input matInput [(ngModel)]="loja">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="campo" *ngIf="tipo === 'saida'">
+      <mat-label>Descrição</mat-label>
+      <input matInput [(ngModel)]="descricao">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="campo" *ngIf="tipo === 'saida'">
+      <mat-label>Tipo de Pagamento</mat-label>
+      <mat-select [(ngModel)]="tipoPagamento">
+        <mat-option *ngFor="let tp of tiposPagamento" [value]="tp">
+          {{ tp }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
     <button mat-raised-button color="primary" class="btn-add" (click)="adicionar()">
       <mat-icon>add</mat-icon>
       Adicionar
@@ -68,9 +87,13 @@
       </mat-icon>
 
       <div matLine class="linha1">{{ t.categoria }} — R$ {{ t.valor | number:'1.2-2' }}</div>
-      <div matLine class="linha2">{{ t.data | date:'shortDate' }}</div>
+      <div matLine class="linha2">{{ t.data | date:'shortDate' }}
+        <span *ngIf="t.tipo === 'saida' && t.loja"> | {{ t.loja }}</span>
+        <span *ngIf="t.tipo === 'saida' && t.descricao"> | {{ t.descricao }}</span>
+        <span *ngIf="t.tipo === 'saida' && t.tipoPagamento"> | {{ t.tipoPagamento }}</span>
+      </div>
 
-      <button mat-icon-button color="warn" (click)="remover(t.id)">
+      <button mat-icon-button color="warn" (click)="remover(t.id!)">
         <mat-icon>delete</mat-icon>
       </button>
 
