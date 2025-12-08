@@ -1,0 +1,80 @@
+<mat-card class="card-principal">
+  <h2 class="titulo">Registrar Transação</h2>
+
+  <div class="form-grid">
+    <mat-form-field appearance="outline" class="campo">
+      <mat-label>Tipo</mat-label>
+      <mat-select [(ngModel)]="tipo">
+        <mat-option value="entrada">Entrada</mat-option>
+        <mat-option value="saida">Saída</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="campo">
+      <mat-label>Categoria</mat-label>
+      <mat-select [(ngModel)]="categoria">
+        <mat-option *ngFor="let cat of (tipo === 'entrada' ? categoriasEntrada : categoriasSaida)"
+                    [value]="cat">
+          {{ cat }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="campo">
+      <mat-label>Valor</mat-label>
+      <input matInput type="number" [(ngModel)]="valor">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="campo">
+      <mat-label>Data</mat-label>
+      <input matInput type="date" [(ngModel)]="data">
+    </mat-form-field>
+
+    <button mat-raised-button color="primary" class="btn-add" (click)="adicionar()">
+      <mat-icon>add</mat-icon>
+      Adicionar
+    </button>
+  </div>
+
+  <mat-card class="resumo">
+    <div class="linha">
+      <span>Entradas:</span>
+      <strong class="positivo">R$ {{ totalPorTipo('entrada') | number:'1.2-2' }}</strong>
+    </div>
+
+    <div class="linha">
+      <span>Saídas:</span>
+      <strong class="negativo">R$ {{ totalPorTipo('saida') | number:'1.2-2' }}</strong>
+    </div>
+
+    <div class="linha total">
+      <span>Saldo:</span>
+      <strong [ngClass]="saldo() >= 0 ? 'positivo' : 'negativo'">
+        R$ {{ saldo() | number:'1.2-2' }}
+      </strong>
+    </div>
+
+    <button mat-stroked-button color="warn" (click)="limparTudo()">Limpar tudo</button>
+  </mat-card>
+
+  <h3 class="subtitulo">Transações</h3>
+
+  <mat-list class="lista-transacoes">
+    <mat-list-item *ngFor="let t of lista" class="item-transacao">
+
+      <mat-icon matListItemIcon class="icone"
+        [ngClass]="t.tipo === 'entrada' ? 'icon-entrada' : 'icon-saida'">
+        {{ t.tipo === 'entrada' ? 'arrow_downward' : 'arrow_upward' }}
+      </mat-icon>
+
+      <div matLine class="linha1">{{ t.categoria }} — R$ {{ t.valor | number:'1.2-2' }}</div>
+      <div matLine class="linha2">{{ t.data | date:'shortDate' }}</div>
+
+      <button mat-icon-button color="warn" (click)="remover(t.id)">
+        <mat-icon>delete</mat-icon>
+      </button>
+
+    </mat-list-item>
+  </mat-list>
+
+</mat-card>

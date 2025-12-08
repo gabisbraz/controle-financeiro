@@ -1,0 +1,16 @@
+<div class="dashboard">
+  <mat-card class="card">
+    <h2>Entradas vs Saídas</h2>
+    <div echarts [options]="chartPie" class="chart"></div>
+  </mat-card>
+
+  <mat-card class="card">
+    <h2>Evolução do Saldo</h2>
+    <div echarts [options]="chartLine" class="chart"></div>
+  </mat-card>
+
+  <mat-card class="card">
+    <h2>Totais por Mês</h2>
+    <div echarts [options]="chartBar" class="chart"></div>
+  </mat-card>
+</div>
