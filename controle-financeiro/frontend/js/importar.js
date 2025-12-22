@@ -74,8 +74,8 @@ function carregarSheet(sheetName) {
 /* ========= TABELA ========= */
 function renderTabela(dados) {
   let html = `
-    <table class="min-w-full border border-gray-200 rounded-lg overflow-hidden">
-      <thead class="bg-gray-100">
+    <table class="w-full">
+      <thead class="bg-gray-100 sticky top-0 z-10">
         <tr>
           <th class="px-4 py-2">Loja</th>
           <th class="px-4 py-2">Descrição</th>

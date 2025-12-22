@@ -396,14 +396,54 @@ function editEntrada(entrada) {
 }
 
 function editSaida(saida) {
-    saidaEditandoId = saida.id;
+    document.getElementById('editSaidaId').value = saida.id;
+    document.getElementById('editSaidaLoja').value = saida.loja;
+    document.getElementById('editSaidaCategoria').value = saida.categoria;
+    document.getElementById('editSaidaDescricao').value = saida.descricao;
+    document.getElementById('editSaidaValor').value = saida.valor;
+    document.getElementById('editSaidaPagamento').value = saida.tipo_pagamento;
+    document.getElementById('editSaidaData').value = saida.data;
 
-    document.getElementById('saidaLoja').value = saida.loja;
-    document.getElementById('saidaCategoria').value = saida.categoria;
-    document.getElementById('saidaDescricao').value = saida.descricao;
-    document.getElementById('saidaValor').value = saida.valor;
-    document.getElementById('saidaTipoPagamento').value = saida.tipo_pagamento;
-    document.getElementById('saidaData').value = saida.data;
-
-    showToast('Editando saída', 'success');
+    const modal = document.getElementById('modalEditarSaida');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
 }
+
+function fecharModalEditarSaida() {
+    const modal = document.getElementById('modalEditarSaida');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+document.getElementById('formEditarSaida').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const id = document.getElementById('editSaidaId').value;
+
+    const data = {
+        loja: document.getElementById('editSaidaLoja').value,
+        categoria: document.getElementById('editSaidaCategoria').value,
+        descricao: document.getElementById('editSaidaDescricao').value,
+        valor: parseFloat(document.getElementById('editSaidaValor').value),
+        tipo_pagamento: document.getElementById('editSaidaPagamento').value,
+        data: document.getElementById('editSaidaData').value
+    };
+
+    try {
+        const response = await fetch(`${API_BASE}/saidas/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) throw new Error('Erro ao atualizar');
+
+        showToast('Saída atualizada com sucesso!');
+        fecharModalEditarSaida();
+        loadSaidas();
+
+    } catch (err) {
+        console.error(err);
+        showToast('Erro ao atualizar saída', 'error');
+    }
+});
