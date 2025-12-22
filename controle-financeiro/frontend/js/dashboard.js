@@ -1,6 +1,6 @@
 // Finance Control - Dashboard JavaScript
 
-const API_BASE = 'tables';
+const API_BASE = 'http://localhost:3000/tables';
 
 // Global state
 let entradas = [];

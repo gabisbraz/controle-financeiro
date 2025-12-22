@@ -1,12 +1,23 @@
 // Finance Control - Main JavaScript
 
 // API Base URL
-const API_BASE = 'tables';
+const API_BASE = 'http://localhost:3000/tables';
+
+// Adicione esta função no início do arquivo, após API_BASE
+console.log('API_BASE URL:', API_BASE);
+console.log('Current location:', window.location.href);
+console.log('Full API endpoint would be:', `${API_BASE}/saidas`);
+
+let editMode = {
+    type: null, // 'entrada' | 'saida'
+    id: null
+};
 
 // Global state
 let entradas = [];
 let saidas = [];
 let deleteTarget = { type: null, id: null };
+let saidaEditandoId = null;
 
 // DOM Elements
 const formEntrada = document.getElementById('formEntrada');
@@ -198,11 +209,22 @@ function renderSaidas() {
             </td>
             <td class="px-4 py-3 text-right valor-negativo">${formatCurrency(saida.valor)}</td>
             <td class="px-4 py-3 text-center">
-                <button onclick="openDeleteModal('saida', '${saida.id}')" class="btn-delete" title="Excluir">
+                <button 
+                    onclick="editSaida(${JSON.stringify(saida).replace(/"/g, '&quot;')})"
+                    class="text-blue-500 hover:text-blue-700 mr-3"
+                    title="Editar"
+                >
+                    <i class="fas fa-edit"></i>
+                </button>
+
+                <button 
+                    onclick="openDeleteModal('saida', '${saida.id}')"
+                    class="btn-delete"
+                    title="Excluir"
+                >
                     <i class="fas fa-trash-alt"></i>
                 </button>
-            </td>
-        </tr>
+            </td>        </tr>
     `).join('');
 }
 
@@ -217,58 +239,105 @@ async function handleEntradaSubmit(e) {
         descricao: document.getElementById('entradaDescricao').value || ''
     };
 
+    const isEdit = editMode.type === 'entrada';
+    const url = isEdit
+        ? `${API_BASE}/entradas/${editMode.id}`
+        : `${API_BASE}/entradas`;
+
+    const method = isEdit ? 'PUT' : 'POST';
+
     try {
-        const response = await fetch(`${API_BASE}/entradas`, {
-            method: 'POST',
+        const response = await fetch(url, {
+            method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
 
         if (response.ok) {
-            showToast('Entrada registrada com sucesso!');
+            showToast(isEdit ? 'Entrada atualizada com sucesso!' : 'Entrada registrada com sucesso!');
             formEntrada.reset();
             document.getElementById('entradaData').value = new Date().toISOString().split('T')[0];
+            editMode = { type: null, id: null };
             loadEntradas();
         } else {
             throw new Error('Erro ao salvar');
         }
     } catch (error) {
         console.error('Erro:', error);
-        showToast('Erro ao registrar entrada', 'error');
+        showToast('Erro ao salvar entrada', 'error');
     }
 }
 
 // Handle Saída form submit
 async function handleSaidaSubmit(e) {
     e.preventDefault();
-    
-    const data = {
-        loja: document.getElementById('saidaLoja').value,
-        categoria: document.getElementById('saidaCategoria').value,
-        descricao: document.getElementById('saidaDescricao').value,
-        valor: parseFloat(document.getElementById('saidaValor').value),
-        tipo_pagamento: document.getElementById('saidaTipoPagamento').value,
-        data: document.getElementById('saidaData').value
+
+    const loja = document.getElementById('saidaLoja').value?.trim();
+    const categoria = document.getElementById('saidaCategoria').value?.trim();
+    const descricao = document.getElementById('saidaDescricao').value?.trim();
+    const valor = parseFloat(document.getElementById('saidaValor').value);
+    const tipo_pagamento = document.getElementById('saidaTipoPagamento').value?.trim();
+    const data = document.getElementById('saidaData').value;
+
+    if (!loja || !categoria || !descricao || !valor || !tipo_pagamento || !data) {
+        showToast('Por favor, preencha todos os campos obrigatórios', 'error');
+        return;
+    }
+
+    if (isNaN(valor) || valor <= 0) {
+        showToast('Valor deve ser um número maior que zero', 'error');
+        return;
+    }
+
+    const data_obj = {
+        loja,
+        categoria,
+        descricao,
+        valor,
+        tipo_pagamento,
+        data
     };
 
+    const isEdit = editMode.type === 'saida';
+    const url = saidaEditandoId
+        ? `${API_BASE}/saidas/${saidaEditandoId}`
+        : `${API_BASE}/saidas`;
+
+    const method = saidaEditandoId ? 'PUT' : 'POST';
+
     try {
-        const response = await fetch(`${API_BASE}/saidas`, {
-            method: 'POST',
+        const response = await fetch(url, {
+            method: method,
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+            body: JSON.stringify(data_obj)
         });
 
+        let responseData = {};
+        if (response.headers.get('content-type')?.includes('application/json')) {
+            responseData = await response.json();
+        }
+        
+        if (!response.ok) {
+            const text = await response.text();
+            console.error(text);
+            throw new Error('Erro da API');
+        }
+
         if (response.ok) {
-            showToast('Saída registrada com sucesso!');
+            showToast(isEdit ? 'Saída atualizada com sucesso!' : 'Saída registrada com sucesso!');
             formSaida.reset();
             document.getElementById('saidaData').value = new Date().toISOString().split('T')[0];
+            editMode = { type: null, id: null };
             loadSaidas();
         } else {
-            throw new Error('Erro ao salvar');
+            throw new Error(responseData.message || 'Erro ao salvar saída');
         }
+        saidaEditandoId = null;
+        formSaida.reset();
+
     } catch (error) {
-        console.error('Erro:', error);
-        showToast('Erro ao registrar saída', 'error');
+        console.error('Erro ao registrar saída:', error);
+        showToast(error.message || 'Erro ao registrar saída', 'error');
     }
 }
 
@@ -313,4 +382,28 @@ async function confirmDelete() {
         console.error('Erro:', error);
         showToast('Erro ao excluir registro', 'error');
     }
+}
+
+function editEntrada(entrada) {
+    editMode = { type: 'entrada', id: entrada.id };
+
+    document.getElementById('entradaCategoria').value = entrada.categoria;
+    document.getElementById('entradaValor').value = entrada.valor;
+    document.getElementById('entradaData').value = entrada.data;
+    document.getElementById('entradaDescricao').value = entrada.descricao || '-';
+
+    showToast('Editando entrada...');
+}
+
+function editSaida(saida) {
+    saidaEditandoId = saida.id;
+
+    document.getElementById('saidaLoja').value = saida.loja;
+    document.getElementById('saidaCategoria').value = saida.categoria;
+    document.getElementById('saidaDescricao').value = saida.descricao;
+    document.getElementById('saidaValor').value = saida.valor;
+    document.getElementById('saidaTipoPagamento').value = saida.tipo_pagamento;
+    document.getElementById('saidaData').value = saida.data;
+
+    showToast('Editando saída', 'success');
 }
