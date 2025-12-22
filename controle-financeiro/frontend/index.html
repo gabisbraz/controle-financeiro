@@ -1,14 +1,17 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Controle Financeiro</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="css/style.css" />
 </head>
+
 <body class="bg-gray-100 min-h-screen font-['Inter']">
     <!-- Header -->
     <header class="bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg">
@@ -19,15 +22,18 @@
                     <h1 class="text-2xl font-bold">Controle Financeiro</h1>
                 </div>
                 <nav class="flex gap-4">
-                    <a href="index.html" class="flex items-center gap-2 bg-white/20 px-4 py-2 rounded-lg hover:bg-white/30 transition">
+                    <a href="index.html"
+                        class="flex items-center gap-2 bg-white/20 px-4 py-2 rounded-lg hover:bg-white/30 transition">
                         <i class="fas fa-list"></i>
                         <span>Registros</span>
                     </a>
-                    <a href="dashboard.html" class="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-white/20 transition">
+                    <a href="dashboard.html"
+                        class="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-white/20 transition">
                         <i class="fas fa-chart-pie"></i>
                         <span>Dashboard</span>
                     </a>
-                    <a href="importar.html" class="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-white/20 transition">
+                    <a href="importar.html"
+                        class="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-white/20 transition">
                         <i class="fas fa-chart-pie"></i>
                         <span>Importar</span>
                     </a>
@@ -44,7 +50,9 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-gray-500 text-sm font-medium">Total Entradas</p>
-                        <p id="totalEntradas" class="text-2xl font-bold text-emerald-600">R$ 0,00</p>
+                        <p id="totalEntradas" class="text-2xl font-bold text-emerald-600">
+                            R$ 0,00
+                        </p>
                     </div>
                     <div class="bg-emerald-100 p-3 rounded-full">
                         <i class="fas fa-arrow-up text-emerald-600 text-xl"></i>
@@ -55,7 +63,9 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-gray-500 text-sm font-medium">Total Saídas</p>
-                        <p id="totalSaidas" class="text-2xl font-bold text-red-600">R$ 0,00</p>
+                        <p id="totalSaidas" class="text-2xl font-bold text-red-600">
+                            R$ 0,00
+                        </p>
                     </div>
                     <div class="bg-red-100 p-3 rounded-full">
                         <i class="fas fa-arrow-down text-red-600 text-xl"></i>
@@ -88,7 +98,8 @@
                 <form id="formEntrada" class="p-6 space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
-                        <select id="entradaCategoria" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                        <select id="entradaCategoria" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
                             <option value="">Selecione...</option>
                             <option value="Salário">Salário</option>
                             <option value="13º Salário">13º Salário</option>
@@ -101,22 +112,23 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Valor (R$)</label>
-                        <input type="number" id="entradaValor" step="0.01" min="0" required 
+                        <input type="number" id="entradaValor" step="0.01" min="0" required
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                            placeholder="0,00">
+                            placeholder="0,00" />
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Data</label>
-                        <input type="date" id="entradaData" required 
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                        <input type="date" id="entradaData" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" />
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Descrição (opcional)</label>
-                        <input type="text" id="entradaDescricao" 
+                        <input type="text" id="entradaDescricao"
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                            placeholder="Ex: Pagamento mensal">
+                            placeholder="Ex: Pagamento mensal" />
                     </div>
-                    <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2">
+                    <button type="submit"
+                        class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2">
                         <i class="fas fa-save"></i>
                         Salvar Entrada
                     </button>
@@ -135,13 +147,14 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Loja</label>
-                            <input type="text" id="saidaLoja" required 
+                            <input type="text" id="saidaLoja" required
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                                placeholder="Nome da loja">
+                                placeholder="Nome da loja" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
-                            <select id="saidaCategoria" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                            <select id="saidaCategoria" required
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
                                 <option value="">Selecione...</option>
                                 <option value="Transporte">Transporte</option>
                                 <option value="Alimentação">Alimentação</option>
@@ -157,20 +170,21 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-                        <input type="text" id="saidaDescricao" required 
+                        <input type="text" id="saidaDescricao" required
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                            placeholder="Descrição da compra">
+                            placeholder="Descrição da compra" />
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Valor (R$)</label>
-                            <input type="number" id="saidaValor" step="0.01" min="0" required 
+                            <input type="number" id="saidaValor" step="0.01" min="0" required
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                                placeholder="0,00">
+                                placeholder="0,00" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Tipo Pagamento</label>
-                            <select id="saidaTipoPagamento" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                            <select id="saidaTipoPagamento" required
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
                                 <option value="">Selecione...</option>
                                 <option value="PIX">PIX</option>
                                 <option value="Crédito">Crédito</option>
@@ -182,10 +196,11 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Data</label>
-                        <input type="date" id="saidaData" required 
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                        <input type="date" id="saidaData" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500" />
                     </div>
-                    <button type="submit" class="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2">
+                    <button type="submit"
+                        class="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2">
                         <i class="fas fa-save"></i>
                         Salvar Saída
                     </button>
@@ -194,70 +209,90 @@
         </div>
 
         <!-- Tables Section -->
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
-            <!-- Entradas Table -->
-            <div class="bg-white rounded-xl shadow-md overflow-hidden">
-                <div class="bg-emerald-500 text-white px-6 py-4 flex justify-between items-center">
-                    <h2 class="text-lg font-semibold flex items-center gap-2">
-                        <i class="fas fa-arrow-circle-up"></i>
-                        Entradas
-                    </h2>
-                    <span id="countEntradas" class="bg-white/20 px-3 py-1 rounded-full text-sm">0 registros</span>
-                </div>
-                <div class="overflow-x-auto max-h-[400px] overflow-y-auto">
-                    <table class="w-full">
-                        <thead class="bg-gray-50 sticky top-0 z-10">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Data</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Categoria</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Descrição</th>
-                                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Valor</th>
-                                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabelaEntradas" class="divide-y divide-gray-200">
-                            <tr>
-                                <td colspan="5" class="px-4 py-8 text-center text-gray-500">
-                                    <i class="fas fa-inbox text-4xl mb-2"></i>
-                                    <p>Nenhuma entrada registrada</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+        <!-- Entradas Table -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="bg-emerald-500 text-white px-6 py-4 flex justify-between items-center">
+                <h2 class="text-lg font-semibold flex items-center gap-2">
+                    <i class="fas fa-arrow-circle-up"></i>
+                    Entradas
+                </h2>
+                <span id="countEntradas" class="bg-white/20 px-3 py-1 rounded-full text-sm">0 registros</span>
             </div>
+            <div class="overflow-x-auto max-h-[400px] overflow-y-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 sticky top-0 z-10">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                                Data
+                            </th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                                Categoria
+                            </th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                                Descrição
+                            </th>
+                            <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">
+                                Valor
+                            </th>
+                            <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">
+                                Ações
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaEntradas" class="divide-y divide-gray-200">
+                        <tr>
+                            <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+                                <i class="fas fa-inbox text-4xl mb-2"></i>
+                                <p>Nenhuma entrada registrada</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-            <!-- Saídas Table -->
-            <div class="bg-white rounded-xl shadow-md overflow-hidden">
-                <div class="bg-red-500 text-white px-6 py-4 flex justify-between items-center">
-                    <h2 class="text-lg font-semibold flex items-center gap-2">
-                        <i class="fas fa-arrow-circle-down"></i>
-                        Saídas
-                    </h2>
-                    <span id="countSaidas" class="bg-white/20 px-3 py-1 rounded-full text-sm">0 registros</span>
-                </div>
-                <div class="overflow-x-auto max-h-[400px] overflow-y-auto">
-                    <table class="w-full">
-                        <thead class="bg-gray-50 sticky top-0 z-10">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Data</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Loja</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Categoria</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Pagamento</th>
-                                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Valor</th>
-                                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabelaSaidas" class="divide-y divide-gray-200">
-                            <tr>
-                                <td colspan="6" class="px-4 py-8 text-center text-gray-500">
-                                    <i class="fas fa-inbox text-4xl mb-2"></i>
-                                    <p>Nenhuma saída registrada</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+        <!-- Saídas Table -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden margingtop-table">
+            <div class="bg-red-500 text-white px-6 py-4 flex justify-between items-center">
+                <h2 class="text-lg font-semibold flex items-center gap-2">
+                    <i class="fas fa-arrow-circle-down"></i>
+                    Saídas
+                </h2>
+                <span id="countSaidas" class="bg-white/20 px-3 py-1 rounded-full text-sm">0 registros</span>
+            </div>
+            <div class="overflow-x-auto max-h-[400px] overflow-y-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 sticky top-0 z-10">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                                Data
+                            </th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                                Loja
+                            </th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                                Categoria
+                            </th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                                Pagamento
+                            </th>
+                            <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">
+                                Valor
+                            </th>
+                            <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">
+                                Ações
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaSaidas" class="divide-y divide-gray-200">
+                        <tr>
+                            <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                                <i class="fas fa-inbox text-4xl mb-2"></i>
+                                <p>Nenhuma saída registrada</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </main>
@@ -269,13 +304,20 @@
                 <div class="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                     <i class="fas fa-trash-alt text-red-500 text-2xl"></i>
                 </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-2">Confirmar Exclusão</h3>
-                <p class="text-gray-600 mb-6">Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita.</p>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">
+                    Confirmar Exclusão
+                </h3>
+                <p class="text-gray-600 mb-6">
+                    Tem certeza que deseja excluir este registro? Esta ação não pode ser
+                    desfeita.
+                </p>
                 <div class="flex gap-3 justify-center">
-                    <button id="btnCancelDelete" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium">
+                    <button id="btnCancelDelete"
+                        class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium">
                         Cancelar
                     </button>
-                    <button id="btnConfirmDelete" class="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition font-medium">
+                    <button id="btnConfirmDelete"
+                        class="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition font-medium">
                         Excluir
                     </button>
                 </div>
@@ -284,7 +326,8 @@
     </div>
 
     <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-4 right-4 bg-emerald-500 text-white px-6 py-3 rounded-lg shadow-lg hidden transform transition-all duration-300 translate-y-full opacity-0">
+    <div id="toast"
+        class="fixed bottom-4 right-4 bg-emerald-500 text-white px-6 py-3 rounded-lg shadow-lg hidden transform transition-all duration-300 translate-y-full opacity-0">
         <div class="flex items-center gap-2">
             <i id="toastIcon" class="fas fa-check-circle"></i>
             <span id="toastMessage">Operação realizada com sucesso!</span>
@@ -293,4 +336,5 @@
 
     <script src="js/main.js"></script>
 </body>
+
 </html>

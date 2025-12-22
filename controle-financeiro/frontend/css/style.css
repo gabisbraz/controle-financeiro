@@ -155,10 +155,27 @@ tbody tr:hover {
     animation: spin 1s linear infinite;
 }
 
-.height-table {
-    height: 400px;
-    overflow-y: scroll;
+.margingtop-table {
+    margin-top: 1.5rem;
 }
+
+.tab-btn {
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+    color: #4b5563;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+}
+
+.tab-btn:hover {
+    background-color: #f9fafb;
+}
+
+.tab-btn.active {
+    color: #059669;
+    border-bottom-color: #059669;
+}
+
 
 @keyframes spin {
     0% { transform: rotate(0deg); }

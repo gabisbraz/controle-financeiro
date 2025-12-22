@@ -179,37 +179,38 @@ app.post('/import/saidas', (req, res) => {
 
 // ================= PREVIEW EXCEL (SAÍDAS) =================
 app.post('/preview/saidas', upload.single('file'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'Arquivo não enviado' });
-  }
-
   const workbook = XLSX.readFile(req.file.path);
+  const sheets = workbook.SheetNames;
 
-  // 👉 Sheet específica
-  const sheetName = 'SAÍDAS';
-
-  if (!workbook.SheetNames.includes(sheetName)) {
+  // Se o front ainda não mandou a sheet escolhida
+  if (!req.body.sheet) {
     fs.unlinkSync(req.file.path);
-    return res.status(400).json({
-      error: `A planilha "${sheetName}" não foi encontrada`
+
+    return res.json({
+      sheets: sheets,
+      data: []
     });
   }
 
+  const sheetName = req.body.sheet;
   const sheet = workbook.Sheets[sheetName];
   const rows = XLSX.utils.sheet_to_json(sheet);
 
-  const preview = rows.map(row => ({
-    loja: row['Loja'],
-    descricao: row['Descrição'],
-    categoria: row['Categoria'],
+  const dados = rows.map(row => ({
+    loja: row['Loja'] ?? '-',
+    descricao: row['Descrição'] ?? '-',
+    categoria: row['Categoria'] ?? '-',
     data: formatarData(row['Data da compra']),
-    tipo_pagamento: row['Tipo pagamento'],
-    valor: row['Valor']
+    tipo_pagamento: row['Tipo pagamento'] ?? '-',
+    valor: row['Valor'] ?? '-'
   }));
 
   fs.unlinkSync(req.file.path);
 
-  res.json({ data: preview });
+  res.json({
+    sheets: sheets,
+    data: dados
+  });
 });
 
 // ================= ROOT =================
@@ -220,4 +221,18 @@ app.get('/', (req, res) => {
 // ================= START =================
 app.listen(PORT, () => {
   console.log(`🚀 API rodando em http://localhost:${PORT}`);
+});
+
+
+// ⚠️ APAGAR TODO O CONTEÚDO DO BANCO (SAÍDAS E ENTRADAS)
+app.delete('/database/clear', (req, res) => {
+  db.serialize(() => {
+    db.run('DELETE FROM entradas');
+    db.run('DELETE FROM saidas', err => {
+      if (err) {
+        return res.status(500).json({ message: 'Erro ao limpar banco' });
+      }
+      res.json({ message: 'Banco de dados limpo com sucesso' });
+    });
+  });
 });
