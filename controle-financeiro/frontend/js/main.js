@@ -170,9 +170,20 @@ function renderEntradas() {
             <td class="px-4 py-3 text-sm text-gray-600">${entrada.descricao || '-'}</td>
             <td class="px-4 py-3 text-right valor-positivo">${formatCurrency(entrada.valor)}</td>
             <td class="px-4 py-3 text-center">
-                <button onclick="openDeleteModal('entrada', '${entrada.id}')" class="btn-delete" title="Excluir">
-                    <i class="fas fa-trash-alt"></i>
-                </button>
+            <button 
+            onclick="editEntrada(${JSON.stringify(entrada).replace(/"/g, "&quot;")})"
+            class="text-blue-500 hover:text-blue-700 mr-3"
+            title="Editar">
+            <i class="fas fa-edit"></i>
+            </button>
+            <button 
+                type="button"
+                onclick="openDeleteModal('entrada', ${entrada.id})"
+                class="btn-delete"
+                title="Excluir"
+            >
+                <i class="fas fa-trash-alt"></i>
+            </button>
             </td>
         </tr>
     `).join('');
@@ -345,7 +356,7 @@ async function handleSaidaSubmit(e) {
 function openDeleteModal(type, id) {
     deleteTarget = { type, id };
     modalDelete.classList.remove('hidden');
-    modalDelete.classList.add('show');
+    modalDelete.classList.add('flex');
 }
 
 // Close delete modal
@@ -385,15 +396,23 @@ async function confirmDelete() {
 }
 
 function editEntrada(entrada) {
-    editMode = { type: 'entrada', id: entrada.id };
+    document.getElementById('editEntradaId').value = entrada.id;
+    document.getElementById('editEntradaCategoria').value = entrada.categoria;
+    document.getElementById('editEntradaValor').value = entrada.valor;
+    document.getElementById('editEntradaData').value = entrada.data;
+    document.getElementById('editEntradaDescricao').value = entrada.descricao || '';
 
-    document.getElementById('entradaCategoria').value = entrada.categoria;
-    document.getElementById('entradaValor').value = entrada.valor;
-    document.getElementById('entradaData').value = entrada.data;
-    document.getElementById('entradaDescricao').value = entrada.descricao || '-';
-
-    showToast('Editando entrada...');
+    const modal = document.getElementById('modalEditarEntrada');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
 }
+
+function fecharModalEditarEntrada() {
+    const modal = document.getElementById('modalEditarEntrada');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
 
 function editSaida(saida) {
     document.getElementById('editSaidaId').value = saida.id;
@@ -445,5 +464,36 @@ document.getElementById('formEditarSaida').addEventListener('submit', async (e) 
     } catch (err) {
         console.error(err);
         showToast('Erro ao atualizar saída', 'error');
+    }
+});
+
+document.getElementById('formEditarEntrada').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const id = document.getElementById('editEntradaId').value;
+
+    const data = {
+        categoria: document.getElementById('editEntradaCategoria').value,
+        valor: parseFloat(document.getElementById('editEntradaValor').value),
+        data: document.getElementById('editEntradaData').value,
+        descricao: document.getElementById('editEntradaDescricao').value
+    };
+
+    try {
+        const response = await fetch(`${API_BASE}/entradas/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) throw new Error('Erro ao atualizar');
+
+        showToast('Entrada atualizada com sucesso!');
+        fecharModalEditarEntrada();
+        loadEntradas();
+
+    } catch (err) {
+        console.error(err);
+        showToast('Erro ao atualizar entrada', 'error');
     }
 });

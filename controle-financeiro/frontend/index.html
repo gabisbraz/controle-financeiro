@@ -80,6 +80,59 @@
         </form>
     </div>
 </div>
+<!-- Modal Editar Entrada -->
+<div id="modalEditarEntrada" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl">
+    <h3 class="text-xl font-bold mb-4 text-emerald-600">
+      Editar Entrada
+    </h3>
+
+    <form id="formEditarEntrada" class="space-y-4">
+      <input type="hidden" id="editEntradaId" />
+
+      <div>
+        <label class="block text-sm font-medium">Categoria</label>
+        <select id="editEntradaCategoria" class="w-full border rounded-lg px-3 py-2">
+          <option>Salário</option>
+          <option>Bônus</option>
+          <option>Freelance</option>
+          <option>Investimentos</option>
+          <option>Outros</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium">Valor</label>
+        <input type="number" step="0.01" id="editEntradaValor"
+          class="w-full border rounded-lg px-3 py-2" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium">Data</label>
+        <input type="date" id="editEntradaData"
+          class="w-full border rounded-lg px-3 py-2" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium">Descrição</label>
+        <input type="text" id="editEntradaDescricao"
+          class="w-full border rounded-lg px-3 py-2" />
+      </div>
+
+      <div class="flex justify-end gap-3 pt-4">
+        <button type="button" onclick="fecharModalEditarEntrada()"
+          class="px-4 py-2 bg-gray-200 rounded-lg">
+          Cancelar
+        </button>
+
+        <button type="submit"
+          class="px-4 py-2 bg-emerald-600 text-white rounded-lg">
+          Salvar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
 
 <body class="bg-gray-100 min-h-screen font-['Inter']">
     <!-- Header -->

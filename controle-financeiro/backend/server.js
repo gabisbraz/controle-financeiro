@@ -94,6 +94,29 @@ app.put('/tables/entradas/:id', (req, res) => {
   );
 });
 
+// ================= DELETE ENTRADA =================
+app.delete('/tables/entradas/:id', (req, res) => {
+  const { id } = req.params;
+
+  db.run(
+    `DELETE FROM entradas WHERE id = ?`,
+    [id],
+    function (err) {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ message: 'Erro ao excluir entrada' });
+      }
+
+      if (this.changes === 0) {
+        return res.status(404).json({ message: 'Entrada não encontrada' });
+      }
+
+      res.status(204).send();
+    }
+  );
+});
+
+
 // ================= SAÍDAS =================
 app.get('/tables/saidas', (req, res) => {
   db.all('SELECT * FROM saidas ORDER BY data DESC', [], (err, rows) => {
@@ -143,6 +166,27 @@ app.put('/tables/saidas/:id', (req, res) => {
   );
 });
 
+// ================= DELETE ENTRADA =================
+app.delete('/tables/saidas/:id', (req, res) => {
+  const { id } = req.params;
+
+  db.run(
+    `DELETE FROM saidas WHERE id = ?`,
+    [id],
+    function (err) {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ message: 'Erro ao excluir entrada' });
+      }
+
+      if (this.changes === 0) {
+        return res.status(404).json({ message: 'Entrada não encontrada' });
+      }
+
+      res.status(204).send();
+    }
+  );
+});
 
 
 
