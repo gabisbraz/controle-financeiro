@@ -165,3 +165,113 @@ function openTab(tabId) {
 function exportarExcel() {
   window.location.href = "http://localhost:3000/export/excel";
 }
+
+let dadosPreviewEntrada = [];
+let arquivoAtualEntrada = null;
+
+/* ========= PREVIEW ENTRADAS ========= */
+function previewEntrada() {
+  const file = document.getElementById("fileInputEntrada").files[0];
+  if (!file) return alert("Selecione um arquivo Excel");
+
+  arquivoAtualEntrada = file;
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  fetch("http://localhost:3000/preview/entradas", {
+    method: "POST",
+    body: formData
+  })
+    .then(res => res.json())
+    .then(json => {
+      if (json.sheets.length > 1) {
+        mostrarSelectSheetsEntrada(json.sheets);
+      } else {
+        console.log("ERROOOO");
+        carregarSheetEntrada(json.sheets[0]);
+      }
+    });
+}
+
+/* ========= SELECT SHEETS ENTRADAS ========= */
+function mostrarSelectSheetsEntrada(sheets) {
+  const container = document.getElementById("sheetContainerEntrada");
+  const select = document.getElementById("sheetSelectEntrada");
+
+  select.innerHTML = `<option value="">Selecione a aba</option>`;
+  sheets.forEach(sheet => {
+    select.innerHTML += `<option value="${sheet}">${sheet}</option>`;
+  });
+
+  container.classList.remove("hidden");
+
+  select.onchange = () => {
+    if (select.value) {
+      carregarSheetEntrada(select.value);
+    }
+  };
+}
+
+/* ========= CARREGAR SHEET ENTRADAS ========= */
+function carregarSheetEntrada(sheetName) {
+  const formData = new FormData();
+  formData.append("file", arquivoAtualEntrada);
+  formData.append("sheet", sheetName);
+
+  fetch("http://localhost:3000/preview/entradas", {
+    method: "POST",
+    body: formData
+  })
+    .then(res => res.json())
+    .then(json => {
+      console.log(json);
+      dadosPreviewEntrada = json.data;
+      renderTabelaEntrada(dadosPreviewEntrada);
+      document.getElementById("confirmarEntradaBtn").disabled = false;
+    });
+}
+
+/* ========= TABELA ENTRADAS ========= */
+function renderTabelaEntrada(dados) {
+  let html = `
+    <table class="w-full">
+      <thead class="bg-gray-100 sticky top-0 z-10">
+        <tr>
+          <th class="px-4 py-2">Categoria</th>
+          <th class="px-4 py-2">Descrição</th>
+          <th class="px-4 py-2">Valor</th>
+          <th class="px-4 py-2">Data</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  dados.forEach(linha => {
+    html += `
+      <tr class="border-t">
+        <td class="px-4 py-2">${valorOuTraco(linha.categoria)}</td>
+        <td class="px-4 py-2">${valorOuTraco(linha.descricao)}</td>
+        <td class="px-4 py-2">${valorOuTraco(linha.valor)}</td>
+        <td class="px-4 py-2">${valorOuTraco(linha.data)}</td>
+      </tr>
+    `;
+  });
+
+  html += "</tbody></table>";
+  document.getElementById("resultadoEntrada").innerHTML = html;
+}
+
+/* ========= CONFIRMAR ENTRADAS ========= */
+function confirmarEntrada() {
+  fetch("http://localhost:3000/import/entradas", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(dadosPreviewEntrada)
+  })
+    .then(res => res.json())
+    .then(r => {
+      alert(`Importação concluída! ${r.registros} registros salvos.`);
+      window.location.reload();
+    });
+}

@@ -334,3 +334,67 @@ app.get('/export/excel', (req, res) => {
     });
   });
 });
+
+// ================= PREVIEW EXCEL (ENTRADAS) =================
+app.post('/preview/entradas', upload.single('file'), (req, res) => {
+  const workbook = XLSX.readFile(req.file.path);
+  const sheets = workbook.SheetNames;
+
+  // Se ainda não escolheu a sheet
+  if (!req.body.sheet) {
+    fs.unlinkSync(req.file.path);
+
+    return res.json({
+      sheets,
+      data: []
+    });
+  }
+
+  const sheetName = req.body.sheet;
+  const sheet = workbook.Sheets[sheetName];
+  const rows = XLSX.utils.sheet_to_json(sheet);
+
+  const dados = rows.map(row => ({
+    categoria: row['categoria'] ?? '-',
+    descricao: row['descricao'] ?? '-',
+    valor: row['valor'] ?? '-',
+    data: formatarData(row['data'])
+  }));
+
+  fs.unlinkSync(req.file.path);
+
+  res.json({
+    sheets,
+    data: dados
+  });
+});
+
+// ================= IMPORTAÇÃO EXCEL (ENTRADAS) =================
+app.post('/import/entradas', (req, res) => {
+  const rows = req.body;
+  let total = 0;
+
+  const stmt = db.prepare(`
+    INSERT INTO entradas
+    (categoria, descricao, valor, data)
+    VALUES (?, ?, ?, ?)
+  `);
+
+  rows.forEach(row => {
+    stmt.run(
+      row.categoria,
+      row.descricao,
+      row.valor,
+      row.data
+    );
+    total++;
+  });
+
+  stmt.finalize();
+
+  res.json({
+    message: 'Importação realizada com sucesso',
+    registros: total
+  });
+});
+
