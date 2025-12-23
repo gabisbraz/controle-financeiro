@@ -398,3 +398,37 @@ app.post('/import/entradas', (req, res) => {
   });
 });
 
+// ================= CARTÃO DE CRÉDITO =================
+
+// Buscar vencimento
+app.get('/cartao', (req, res) => {
+  db.get(`SELECT * FROM cartao_fatura LIMIT 1`, [], (err, row) => {
+    if (err) {
+      return res.status(500).json({ message: 'Erro ao buscar cartão' });
+    }
+    res.json(row || null);
+  });
+});
+
+// Salvar / Atualizar vencimento
+app.post('/cartao', (req, res) => {
+  const { nome_cartao, dia_vencimento } = req.body;
+
+  db.get(`SELECT id FROM cartao_fatura LIMIT 1`, [], (err, row) => {
+    if (row) {
+      // Atualiza
+      db.run(
+        `UPDATE cartao_fatura SET nome_cartao = ?, dia_vencimento = ? WHERE id = ?`,
+        [nome_cartao, dia_vencimento, row.id],
+        () => res.json({ message: 'Cartão atualizado com sucesso' })
+      );
+    } else {
+      // Insere
+      db.run(
+        `INSERT INTO cartao_fatura (nome_cartao, dia_vencimento) VALUES (?, ?)`,
+        [nome_cartao, dia_vencimento],
+        () => res.json({ message: 'Cartão salvo com sucesso' })
+      );
+    }
+  });
+});

@@ -275,3 +275,46 @@ function confirmarEntrada() {
       window.location.reload();
     });
 }
+
+// ================= CARTÃO DE CRÉDITO =================
+
+function carregarCartao() {
+  fetch('http://localhost:3000/cartao')
+    .then(res => res.json())
+    .then(dados => {
+      if (dados) {
+        document.getElementById('nomeCartao').value = dados.nome_cartao;
+        document.getElementById('diaVencimento').value = dados.dia_vencimento;
+      }
+    });
+}
+
+function salvarCartao() {
+  const nome_cartao = document.getElementById('nomeCartao').value.trim();
+  const dia_vencimento = document.getElementById('diaVencimento').value;
+
+  if (!nome_cartao || !dia_vencimento) {
+    alert('Preencha todos os campos');
+    return;
+  }
+
+  if (dia_vencimento < 1 || dia_vencimento > 31) {
+    alert('Dia de vencimento inválido');
+    return;
+  }
+
+  fetch('http://localhost:3000/cartao', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nome_cartao, dia_vencimento })
+  })
+    .then(res => res.json())
+    .then(() => {
+      document.getElementById('cartaoMsg').innerText =
+        'Dados do cartão salvos com sucesso!';
+      document.getElementById('cartaoMsg').className =
+        'text-green-600 text-sm font-semibold';
+    });
+}
+
+document.addEventListener('DOMContentLoaded', carregarCartao);

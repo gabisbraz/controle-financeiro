@@ -61,6 +61,11 @@
                     <i class="fas fa-trash-alt mr-2"></i>
                     Deletar banco
                 </button>
+                <button class="tab-btn" onclick="openTab('cartao')">
+                    <i class="fas fa-credit-card mr-2"></i>
+                    Cartão de Crédito
+                </button>
+
             </div>
 
             <!-- TAB 1 – IMPORTAR SAÍDAS -->
@@ -170,6 +175,47 @@
                     Limpar banco de dados
                 </button>
             </div>
+
+            <!-- TAB 5 – CARTÃO -->
+            <div id="cartao" class="tab-content p-6 hidden">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <i class="fas fa-credit-card text-emerald-600"></i>
+                    Cartão de crédito
+                </h2>
+
+                <p class="text-gray-600 mb-6">
+                    Defina o dia de vencimento do seu cartão de crédito.
+                    <br>
+                    Essa informação será utilizada para cálculos futuros de fatura.
+                </p>
+
+                <div class="max-w-md space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">
+                            Nome do cartão
+                        </label>
+                        <input id="nomeCartao" type="text"
+                            placeholder="Ex: Nubank, Itaú, Inter..."
+                            class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">
+                            Dia de vencimento
+                        </label>
+                        <input id="diaVencimento" type="number" min="1" max="31"
+                            class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                    </div>
+
+                    <button onclick="salvarCartao()"
+                        class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg font-semibold">
+                        Salvar
+                    </button>
+
+                    <p id="cartaoMsg" class="text-sm font-semibold"></p>
+                </div>
+            </div>
+
         </div>
     </main>
 
