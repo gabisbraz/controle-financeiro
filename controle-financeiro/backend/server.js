@@ -40,6 +40,14 @@ db.serialize(() => {
       data TEXT
     )
   `);
+  db.run(`
+    CREATE TABLE IF NOT EXISTS cartao_fatura (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nome_cartao TEXT NOT NULL,
+      dia_vencimento INTEGER NOT NULL
+    )
+  `);
+
 });
 
 // ================= HELPERS =================
@@ -277,6 +285,52 @@ app.delete('/database/clear', (req, res) => {
         return res.status(500).json({ message: 'Erro ao limpar banco' });
       }
       res.json({ message: 'Banco de dados limpo com sucesso' });
+    });
+  });
+});
+
+
+// ================= EXPORTAR EXCEL =================
+app.get('/export/excel', (req, res) => {
+  db.serialize(() => {
+    db.all('SELECT * FROM saidas ORDER BY data DESC', [], (err, saidas) => {
+      if (err) {
+        return res.status(500).json({ message: 'Erro ao buscar saídas' });
+      }
+
+      db.all('SELECT * FROM entradas ORDER BY data DESC', [], (err2, entradas) => {
+        if (err2) {
+          return res.status(500).json({ message: 'Erro ao buscar entradas' });
+        }
+
+        // Criar workbook
+        const wb = XLSX.utils.book_new();
+
+        // Sheet Saídas
+        const wsSaidas = XLSX.utils.json_to_sheet(saidas);
+        XLSX.utils.book_append_sheet(wb, wsSaidas, 'Saídas');
+
+        // Sheet Entradas
+        const wsEntradas = XLSX.utils.json_to_sheet(entradas);
+        XLSX.utils.book_append_sheet(wb, wsEntradas, 'Entradas');
+
+        // Gerar arquivo em memória
+        const buffer = XLSX.write(wb, {
+          type: 'buffer',
+          bookType: 'xlsx'
+        });
+
+        res.setHeader(
+          'Content-Disposition',
+          'attachment; filename="controle-financeiro.xlsx"'
+        );
+        res.setHeader(
+          'Content-Type',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        );
+
+        res.send(buffer);
+      });
     });
   });
 });

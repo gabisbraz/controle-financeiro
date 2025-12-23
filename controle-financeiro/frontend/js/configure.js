@@ -161,3 +161,7 @@ function openTab(tabId) {
     document.getElementById(tabId).classList.remove('hidden');
     event.currentTarget.classList.add('active');
 }
+
+function exportarExcel() {
+  window.location.href = "http://localhost:3000/export/excel";
+}
