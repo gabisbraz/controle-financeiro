@@ -47,9 +47,6 @@
                     <span class="font-medium text-gray-700">Filtrar período:</span>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="setPeriod('all')" id="btnAll" class="period-btn active px-4 py-2 rounded-lg text-sm font-medium transition">
-                        Todos
-                    </button>
                     <button onclick="setPeriod('month')" id="btnMonth" class="period-btn px-4 py-2 rounded-lg text-sm font-medium transition">
                         Este Mês
                     </button>
@@ -60,6 +57,16 @@
                         Este Ano
                     </button>
                 </div>
+                <div class="flex items-center gap-2 ml-4">
+                    <i class="fas fa-credit-card text-gray-500"></i>
+                    <span class="font-medium text-gray-700">Fatura do Cartão:</span>
+                    <select id="cartaoMes" class="px-3 py-2 border rounded-lg text-sm" onchange="applyCartaoPeriod()">
+                        <option value="">Todos</option>
+                        <!-- Opções serão preenchidas pelo JS -->
+
+                    </select>
+                </div>
+
                 <div class="flex gap-2 ml-auto">
                     <input type="date" id="startDate" class="px-3 py-2 border rounded-lg text-sm">
                     <span class="self-center text-gray-500">até</span>

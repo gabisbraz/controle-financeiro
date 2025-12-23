@@ -33,8 +33,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function loadAllData() {
     try {
         const [entradasRes, saidasRes] = await Promise.all([
-            fetch(`${API_BASE}/entradas?limit=1000`),
-            fetch(`${API_BASE}/saidas?limit=1000`)
+            fetch(`${API_BASE}/entradas`),
+            fetch(`${API_BASE}/saidas`)
         ]);
         
         const entradasData = await entradasRes.json();
@@ -65,6 +65,16 @@ function formatDate(dateString) {
 
 // Set period filter
 function setPeriod(period) {
+
+    if (currentPeriod === period) {
+        currentPeriod = 'all';
+        document.querySelectorAll('.period-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById('btnAll')?.classList.add('active');
+        applyFilter(); // mostra todos os dados
+        updateDashboard();
+        return;
+    }
+
     currentPeriod = period;
     
     // Update button styles
@@ -99,7 +109,8 @@ function applyFilter(customStart = null, customEnd = null) {
     const now = new Date();
     let startDate, endDate;
     
-    if (currentPeriod === 'custom' && customStart && customEnd) {
+    if ((currentPeriod === 'custom' || currentPeriod === 'cartao') && customStart && customEnd) {
+        if (!customStart || !customEnd) return;
         startDate = new Date(customStart + 'T00:00:00');
         endDate = new Date(customEnd + 'T23:59:59');
     } else {
@@ -506,7 +517,6 @@ function updateRecentTransactions() {
             descricaoFull: `${s.loja} - ${s.descricao}`
         }))
     ].sort((a, b) => new Date(b.data) - new Date(a.data))
-    .slice(0, 15);
     
     if (allTransactions.length === 0) {
         tbody.innerHTML = `
@@ -542,3 +552,96 @@ function updateRecentTransactions() {
         </tr>
     `).join('');
 }
+
+async function loadCartaoMeses() {
+    try {
+        // Buscar dados do cartão para saber o dia de vencimento
+        const res = await fetch('http://localhost:3000/cartao');
+        const cartao = await res.json();
+        if (!cartao) return;
+
+        const diaVencimento = parseInt(cartao.dia_vencimento);
+
+        const select = document.getElementById('cartaoMes');
+        select.innerHTML = '';
+        select.appendChild(new Option('Todos', ''));
+
+        const today = new Date();
+        for (let i = 0; i < 12; i++) {
+            const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+            const month = date.getMonth() + 1;
+            const year = date.getFullYear();
+            const optionValue = `${year}-${String(month).padStart(2, '0')}`;
+            const optionText = `${String(month).padStart(2,'0')}/${year}`;
+            const option = document.createElement('option');
+            option.value = optionValue;
+            option.text = optionText;
+            select.appendChild(option);
+        }
+    } catch (error) {
+        console.error('Erro ao carregar meses do cartão:', error);
+    }
+}
+
+let currentCartaoMonth = null;
+
+async function applyCartaoPeriod() {
+    try {
+        // Buscar dados do cartão para saber o dia de vencimento
+        const res = await fetch('http://localhost:3000/cartao');
+        const cartao = await res.json();
+        if (!cartao) return;
+
+        const diaVencimento = parseInt(cartao.dia_vencimento);
+
+        console.log('Aplicando filtro do cartão com dia de vencimento:', diaVencimento);
+        const select = document.getElementById('cartaoMes');
+        const selectedMonth = select.value;
+
+        // Toggle: se o mês selecionado já está ativo, remove o filtro
+        if (currentCartaoMonth === "Todos") {
+            currentCartaoMonth = null;
+            select.value = ''; // mostra "Todos" ou placeholder
+            applyFilter(); // aplica filtro geral sem considerar cartão
+            updateDashboard();
+            return;
+        }
+
+        currentCartaoMonth = selectedMonth;
+
+        // Aqui você vai filtrar baseado no vencimento do cartão
+        // Exemplo: considerando que filteredEntradas/filteredSaidas já existem
+        if (currentCartaoMonth) {
+            const [year, month] = currentCartaoMonth.split('-'); // formato: "YYYY-MM"
+            const startDate = new Date(year, parseInt(month) - 1, diaVencimento+1);
+            const endDate = new Date(year, parseInt(month), diaVencimento);
+
+            console.log(`Filtrando de ${startDate.toISOString()} até ${endDate.toISOString()}`);
+            filteredEntradas = entradas.filter(e => {
+                const date = new Date(e.data + 'T00:00:00');
+                return date >= startDate && date <= endDate;
+            });
+
+            filteredSaidas = saidas.filter(s => {
+                const date = new Date(s.data + 'T00:00:00');
+                return date >= startDate && date <= endDate;
+            });
+        } else {
+            // Sem filtro: mostra todos
+            filteredEntradas = [...entradas];
+            filteredSaidas = [...saidas];
+        }
+
+        updateDashboard();
+    } catch (error) {
+        console.error('Erro ao aplicar filtro do cartão:', error);
+    }
+}
+
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadAllData();
+    await loadCartaoMeses(); // ✅ Carrega os meses do cartão
+    initCharts();
+    updateDashboard();
+});
