@@ -13,12 +13,14 @@ const saidasRoutes = require('./routes/saidas');
 const importExportRoutes = require('./routes/importExport');
 const cartaoRoutes = require('./routes/cartao');
 const clearRoutes = require('./routes/clear');
+const categoriasRoutes = require('./routes/categorias');
 
 app.use('/tables/entradas', entradasRoutes);
 app.use('/tables/saidas', saidasRoutes);
 app.use('/', importExportRoutes);
 app.use('/cartao', cartaoRoutes);
 app.use('/', clearRoutes);
+app.use('/categorias/saidas', categoriasRoutes);
 
 // Root
 app.get('/', (req, res) => res.send('API Controle Financeiro rodando 🚀'));

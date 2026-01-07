@@ -28,20 +28,7 @@ const modalDelete = document.getElementById("modalDelete");
 const toast = document.getElementById("toast");
 
 // Remover import/export para uso em ambiente browser
-// Copiar as listas diretamente para este arquivo
-const categoriasSaida = [
-  "Transporte",
-  "Alimentação",
-  "Autocuidado",
-  "Moradia",
-  "Saúde",
-  "Educação",
-  "Lazer",
-  "Vestuário",
-  "MG",
-  "Outros",
-];
-
+// Categorias de entrada são fixas
 const categoriasEntrada = [
   "Salário",
   "13º Salário",
@@ -51,6 +38,9 @@ const categoriasEntrada = [
   "Investimentos",
   "Outros",
 ];
+
+// Categorias de saída serão carregadas da API
+let categoriasSaida = [];
 
 // Initialize
 document.addEventListener("DOMContentLoaded", () => {
@@ -671,10 +661,39 @@ document
   });
 
 function preencherCategorias() {
+  // Carregar categorias de saída da API
+  fetch('http://localhost:3000/categorias/saidas')
+    .then(res => {
+      if (!res.ok) throw new Error('Erro ao carregar categorias');
+      return res.json();
+    })
+    .then(json => {
+      categoriasSaida = (json.data || []).map(cat => cat.nome);
+      atualizarSelectsCategorias();
+    })
+    .catch(err => {
+      console.error('Erro ao carregar categorias de saída:', err);
+      // Usar categorias padrão em caso de erro
+      categoriasSaida = [
+        "Transporte",
+        "Alimentação",
+        "Autocuidado",
+        "Moradia",
+        "Saúde",
+        "Educação",
+        "Lazer",
+        "Vestuário",
+        "MG",
+        "Outros",
+      ];
+      atualizarSelectsCategorias();
+    });
+}
+
+function atualizarSelectsCategorias() {
   // Saída principal
   const saidaCategoria = document.getElementById("saidaCategoria");
   if (saidaCategoria) {
-    console.log("Preenchendo categorias de saída", categoriasSaida);
     saidaCategoria.innerHTML =
       '<option value="">Selecione...</option>' +
       categoriasSaida

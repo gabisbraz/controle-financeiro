@@ -39,6 +39,39 @@ db.serialize(() => {
     )
   `);
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS categorias_saidas (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nome TEXT NOT NULL,
+      ordem INTEGER DEFAULT 0,
+      ativa INTEGER DEFAULT 1,
+      data_criacao TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // Inserir categorias padrão se a tabela estiver vazia
+  db.get('SELECT COUNT(*) as count FROM categorias_saidas', (err, row) => {
+    if (row.count === 0) {
+      const categoriasDefault = [
+        'Transporte',
+        'Alimentação',
+        'Autocuidado',
+        'Moradia',
+        'Saúde',
+        'Educação',
+        'Lazer',
+        'Vestuário',
+        'MG',
+        'Outros'
+      ];
+      const stmt = db.prepare('INSERT INTO categorias_saidas (nome, ordem) VALUES (?, ?)');
+      categoriasDefault.forEach((cat, index) => {
+        stmt.run(cat, index);
+      });
+      stmt.finalize();
+    }
+  });
+
   // Adicionar colunas de parcelamento se não existirem
   db.run(`ALTER TABLE entradas ADD COLUMN data_input TEXT`, (err) => {
     // Ignorar erro se a coluna já existir

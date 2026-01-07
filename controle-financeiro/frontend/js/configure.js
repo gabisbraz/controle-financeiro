@@ -348,4 +348,147 @@ function salvarCartao() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', carregarCartao);
+document.addEventListener('DOMContentLoaded', () => {
+  carregarCartao();
+  // Carregar categorias quando a aba for aberta
+  // Também carregamos no início caso o usuário vá direto para ela
+  carregarCategorias();
+});
+
+// ================= CATEGORIAS DE SAÍDA =================
+
+function carregarCategorias() {
+  const tabela = document.getElementById('tabelaCategorias');
+  if (!tabela) return;
+
+  fetch('http://localhost:3000/categorias/saidas')
+    .then(res => {
+      if (!res.ok) throw new Error('Erro ao carregar categorias');
+      return res.json();
+    })
+    .then(json => {
+      const categorias = json.data || [];
+      renderizarTabelaCategorias(categorias);
+    })
+    .catch(err => {
+      console.error(err);
+      tabela.innerHTML = `
+        <tr>
+          <td colspan="4" class="px-4 py-8 text-center text-red-500">
+            <i class="fas fa-exclamation-circle text-2xl"></i>
+            <p class="mt-2">Erro ao carregar categorias. Tente novamente.</p>
+          </td>
+        </tr>
+      `;
+    });
+}
+
+function renderizarTabelaCategorias(categorias) {
+  const tabela = document.getElementById('tabelaCategorias');
+
+  if (categorias.length === 0) {
+    tabela.innerHTML = `
+      <tr>
+        <td colspan="4" class="px-4 py-8 text-center text-gray-500">
+          <i class="fas fa-tags text-4xl mb-2"></i>
+          <p>Nenhuma categoria cadastrada</p>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tabela.innerHTML = categorias
+    .map(cat => `
+      <tr class="hover:bg-gray-50 transition">
+        <td class="px-4 py-3 text-sm text-gray-600">${cat.id}</td>
+        <td class="px-4 py-3 text-sm font-medium text-gray-900">${escapeHtml(cat.nome)}</td>
+        <td class="px-4 py-3 text-sm text-gray-600">${cat.ordem}</td>
+        <td class="px-4 py-3 text-center">
+          <button
+            onclick="excluirCategoria(${cat.id})"
+            class="text-red-500 hover:text-red-700 transition"
+            title="Excluir categoria"
+          >
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </td>
+      </tr>
+    `)
+    .join('');
+}
+
+function salvarCategoria() {
+  const input = document.getElementById('novaCategoria');
+  const msg = document.getElementById('categoriaMsg');
+  const nome = input.value.trim();
+
+  if (!nome) {
+    msg.textContent = 'Digite o nome da categoria';
+    msg.className = 'text-sm mt-2 font-semibold text-red-600';
+    input.focus();
+    return;
+  }
+
+  fetch('http://localhost:3000/categorias/saidas', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nome })
+  })
+    .then(res => {
+      if (!res.ok) throw new Error('Erro ao salvar categoria');
+      return res.json();
+    })
+    .then(() => {
+      msg.textContent = 'Categoria salva com sucesso!';
+      msg.className = 'text-sm mt-2 font-semibold text-green-600';
+      input.value = '';
+      carregarCategorias();
+    })
+    .catch(err => {
+      console.error(err);
+      msg.textContent = 'Erro ao salvar categoria';
+      msg.className = 'text-sm mt-2 font-semibold text-red-600';
+    });
+}
+
+function excluirCategoria(id) {
+  if (!confirm('Tem certeza que deseja excluir esta categoria?')) {
+    return;
+  }
+
+  fetch(`http://localhost:3000/categorias/saidas/${id}`, {
+    method: 'DELETE'
+  })
+    .then(res => {
+      if (!res.ok) throw new Error('Erro ao excluir categoria');
+      return res.json();
+    })
+    .then(() => {
+      carregarCategorias();
+    })
+    .catch(err => {
+      console.error(err);
+      alert('Erro ao excluir categoria');
+    });
+}
+
+// Função helper para escapar HTML e prevenir XSS
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Permitir salvar com Enter no input de categoria
+document.addEventListener('DOMContentLoaded', () => {
+  const inputCategoria = document.getElementById('novaCategoria');
+  if (inputCategoria) {
+    inputCategoria.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        salvarCategoria();
+      }
+    });
+  }
+});
