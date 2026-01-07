@@ -566,26 +566,36 @@ async function loadCartaoMeses() {
         // Buscar dados do cartão para saber o dia de vencimento
         const res = await fetch('http://localhost:3000/cartao');
         const cartao = await res.json();
-        if (!cartao) return;
-
-        const diaVencimento = parseInt(cartao.dia_vencimento);
-
+        
+        // Buscar todos os meses únicos das tabelas de entradas e saídas
+        const allDates = new Set();
+        
+        // Adicionar datas da tabela entradas
+        entradas.forEach(e => {
+            if (e.data) allDates.add(e.data.substring(0, 7)); // YYYY-MM
+        });
+        
+        // Adicionar datas da tabela saidas
+        saidas.forEach(s => {
+            if (s.data) allDates.add(s.data.substring(0, 7)); // YYYY-MM
+        });
+        
+        // Converter para array e ordenar
+        const uniqueMonths = Array.from(allDates).sort();
+        
         const select = document.getElementById('cartaoMes');
-        select.innerHTML = '';
-        select.appendChild(new Option('Todos', ''));
-
-        const today = new Date();
-        for (let i = 0; i < 12; i++) {
-            const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
-            const month = date.getMonth() + 1;
-            const year = date.getFullYear();
-            const optionValue = `${year}-${String(month).padStart(2, '0')}`;
-            const optionText = `${String(month).padStart(2,'0')}/${year}`;
+        select.innerHTML = '<option value="">Todos</option>';
+        
+        // Adicionar opções para cada mês único
+        uniqueMonths.forEach(monthStr => {
+            const [year, month] = monthStr.split('-');
+            const optionValue = monthStr;
+            const optionText = `${String(month).padStart(2, '0')}/${year}`;
             const option = document.createElement('option');
             option.value = optionValue;
             option.text = optionText;
             select.appendChild(option);
-        }
+        });
     } catch (error) {
         console.error('Erro ao carregar meses do cartão:', error);
     }
@@ -598,9 +608,9 @@ async function applyCartaoPeriod() {
         // Buscar dados do cartão para saber o dia de vencimento
         const res = await fetch('http://localhost:3000/cartao');
         const cartao = await res.json();
-        if (!cartao) return;
-
-        const diaVencimento = parseInt(cartao.dia_vencimento);
+        
+        const diaVencimento = cartao ? parseInt(cartao.dia_vencimento) : 10; // Default para 10 se não configurado
+        
         const select = document.getElementById('cartaoMes');
         const selectedMonth = select.value;
 
