@@ -529,7 +529,7 @@ function updateRecentTransactions() {
     if (allTransactions.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+                <td colspan="6" class="px-4 py-8 text-center text-gray-500">
                     <i class="fas fa-inbox text-4xl mb-2 block"></i>
                     <p>Nenhuma transação encontrada</p>
                 </td>
@@ -548,6 +548,14 @@ function updateRecentTransactions() {
                 </span>
             </td>
             <td class="px-4 py-3 text-sm text-gray-900">${t.descricaoFull}</td>
+            <td class="px-4 py-3 text-sm">
+                ${t.parcelas > 1 
+                    ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                        <i class="fas fa-layer-group mr-1"></i>
+                        ${t.parcela_atual}/${t.parcelas}
+                       </span>` 
+                    : '<span class="text-gray-400">-</span>'}
+            </td>
             <td class="px-4 py-3">
                 <span class="badge-categoria">
                     <i class="fas fa-tag ${t.tipo === 'entrada' ? 'text-emerald-500' : 'text-red-500'}"></i>
