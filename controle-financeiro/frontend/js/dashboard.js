@@ -124,9 +124,9 @@ function applyFilter(customStart = null, customEnd = null) {
                 endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
                 break;
             case 'quarter':
-                const quarter = Math.floor(now.getMonth() / 3);
-                startDate = new Date(now.getFullYear(), quarter * 3, 1);
-                endDate = new Date(now.getFullYear(), quarter * 3 + 3, 0, 23, 59, 59);
+                // Trimestre móvel: mês atual + 2 meses anteriores
+                startDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+                endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
                 break;
             case 'semester':
                 startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
