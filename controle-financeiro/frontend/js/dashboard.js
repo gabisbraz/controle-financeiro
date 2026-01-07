@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     await loadAllData();
     await loadCartaoMeses(); // Carrega os meses do cartão
+    await carregarCategoriasEntrada(); // Carregar categorias de entrada do banco de dados
     initCharts();
     updateDashboard();
     
@@ -965,6 +966,39 @@ async function applyCartaoPeriod() {
         updateDashboard();
     } catch (error) {
         console.error('Erro ao aplicar filtro do cartão:', error);
+    }
+}
+
+// Carregar categorias de entrada do banco de dados
+async function carregarCategoriasEntrada() {
+    try {
+        const response = await fetch('http://localhost:3000/categorias/entradas');
+        if (!response.ok) throw new Error('Erro ao carregar categorias');
+        
+        const result = await response.json();
+        const categorias = result.data || [];
+        
+        const select = document.getElementById('editEntradaCategoria');
+        if (select) {
+            select.innerHTML = '<option value="">Selecione...</option>' +
+                categorias.map(cat => `<option value="${cat.nome}">${cat.nome}</option>`).join('');
+        }
+    } catch (error) {
+        console.error('Erro ao carregar categorias de entrada:', error);
+        // Fallback para opções hardcoded em caso de erro
+        const select = document.getElementById('editEntradaCategoria');
+        if (select) {
+            select.innerHTML = `
+                <option value="">Selecione...</option>
+                <option value="Salário">Salário</option>
+                <option value="13º Salário">13º Salário</option>
+                <option value="Bônus">Bônus</option>
+                <option value="Pagamento">Pagamento</option>
+                <option value="Freelance">Freelance</option>
+                <option value="Investimentos">Investimentos</option>
+                <option value="Outros">Outros</option>
+            `;
+        }
     }
 }
 

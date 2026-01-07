@@ -774,6 +774,17 @@ function atualizarSelectsCategorias() {
         .map((cat) => `<option value="${cat}">${cat}</option>`)
         .join("");
   }
+
+  // Entrada principal (index.html)
+  const entradaCategoria = document.getElementById("entradaCategoria");
+  if (entradaCategoria) {
+    entradaCategoria.innerHTML =
+      '<option value="">Selecione...</option>' +
+      categoriasEntrada
+        .map((cat) => `<option value="${cat}">${cat}</option>`)
+        .join("");
+  }
+
   // Modal editar entrada
   const editEntradaCategoria = document.getElementById("editEntradaCategoria");
   if (editEntradaCategoria) {
@@ -781,6 +792,7 @@ function atualizarSelectsCategorias() {
       .map((cat) => `<option value="${cat}">${cat}</option>`)
       .join("");
   }
+
   // Modal editar saída
   const editSaidaCategoria = document.getElementById("editSaidaCategoria");
   if (editSaidaCategoria) {
