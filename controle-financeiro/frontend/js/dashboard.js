@@ -9,6 +9,7 @@ let filteredEntradas = [];
 let filteredSaidas = [];
 let currentPeriod = 'semester';
 let charts = {};
+let deleteTarget = { type: null, id: null };
 
 // Colors for charts
 const colors = {
@@ -31,7 +32,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadCartaoMeses(); // Carrega os meses do cartão
     initCharts();
     updateDashboard();
+    
+    // Setup event listeners for modals
+    setupModalListeners();
 });
+
+// Setup modal event listeners
+function setupModalListeners() {
+    // Delete modal buttons
+    document.getElementById('btnCancelDelete').addEventListener('click', closeDeleteModal);
+    document.getElementById('btnConfirmDelete').addEventListener('click', confirmDelete);
+    
+    // Close modal on backdrop click
+    const modalDelete = document.getElementById('modalDelete');
+    modalDelete.addEventListener('click', (e) => {
+        if (e.target === modalDelete) closeDeleteModal();
+    });
+    
+    // Edit forms
+    document.getElementById('formEditarSaida').addEventListener('submit', handleEditSaidaSubmit);
+    document.getElementById('formEditarEntrada').addEventListener('submit', handleEditEntradaSubmit);
+}
 
 // Load all data
 async function loadAllData() {
@@ -65,6 +86,34 @@ function formatCurrency(value) {
 function formatDate(dateString) {
     const date = new Date(dateString + 'T00:00:00');
     return date.toLocaleDateString('pt-BR');
+}
+
+// Show toast notification
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    const toastIcon = document.getElementById('toastIcon');
+    const toastMessage = document.getElementById('toastMessage');
+    
+    toastMessage.textContent = message;
+    
+    if (type === 'success') {
+        toast.className = 'fixed bottom-4 right-4 bg-emerald-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+        toastIcon.className = 'fas fa-check-circle';
+    } else if (type === 'error') {
+        toast.className = 'fixed bottom-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+        toastIcon.className = 'fas fa-exclamation-circle';
+    }
+    
+    toast.classList.remove('hidden', 'translate-y-full', 'opacity-0');
+    toast.classList.add('show');
+    
+    setTimeout(() => {
+        toast.classList.add('translate-y-full', 'opacity-0');
+        setTimeout(() => {
+            toast.classList.add('hidden');
+            toast.classList.remove('show');
+        }, 300);
+    }, 3000);
 }
 
 // Set period filter
@@ -196,7 +245,7 @@ function renderTabelaSaidas() {
     if (filteredSaidas.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                <td colspan="8" class="px-4 py-8 text-center text-gray-500">
                     <i class="fas fa-inbox text-4xl mb-2 block"></i>
                     <p>Nenhuma saída encontrada</p>
                 </td>
@@ -236,6 +285,22 @@ function renderTabelaSaidas() {
             <td class="px-4 py-3 text-right font-semibold text-red-600 whitespace-nowrap">
                 - ${formatCurrency(s.valor)}
             </td>
+            <td class="px-4 py-3 text-center">
+                <button 
+                    onclick='editSaida(${JSON.stringify(s).replace(/'/g, "\\'")})'
+                    class="text-blue-500 hover:text-blue-700 mr-2 transition"
+                    title="Editar"
+                >
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button 
+                    onclick="openDeleteModal('saida', '${s.id}')"
+                    class="text-red-500 hover:text-red-700 transition"
+                    title="Excluir"
+                >
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </td>
         </tr>
     `).join('');
 }
@@ -247,7 +312,7 @@ function renderTabelaEntradas() {
     if (filteredEntradas.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="4" class="px-4 py-8 text-center text-gray-500">
+                <td colspan="5" class="px-4 py-8 text-center text-gray-500">
                     <i class="fas fa-inbox text-4xl mb-2 block"></i>
                     <p>Nenhuma entrada encontrada</p>
                 </td>
@@ -271,6 +336,22 @@ function renderTabelaEntradas() {
             </td>
             <td class="px-4 py-3 text-right font-semibold text-emerald-600 whitespace-nowrap">
                 + ${formatCurrency(e.valor)}
+            </td>
+            <td class="px-4 py-3 text-center">
+                <button 
+                    onclick='editEntrada(${JSON.stringify(e).replace(/'/g, "\\'")})'
+                    class="text-blue-500 hover:text-blue-700 mr-2 transition"
+                    title="Editar"
+                >
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button 
+                    onclick="openDeleteModal('entrada', '${e.id}')"
+                    class="text-red-500 hover:text-red-700 transition"
+                    title="Excluir"
+                >
+                    <i class="fas fa-trash-alt"></i>
+                </button>
             </td>
         </tr>
     `).join('');
@@ -300,6 +381,155 @@ function getTipoPagamentoIcon(tipo) {
         'boleto': '<i class="fas fa-barcode mr-1"></i>'
     };
     return icons[tipo?.toLowerCase()] || '';
+}
+
+// Edit functions
+function editSaida(saida) {
+    document.getElementById('editSaidaId').value = saida.id;
+    document.getElementById('editSaidaData').value = saida.data;
+    document.getElementById('editSaidaValor').value = saida.valor;
+    document.getElementById('editSaidaLoja').value = saida.loja || '';
+    document.getElementById('editSaidaDescricao').value = saida.descricao || '';
+    document.getElementById('editSaidaCategoria').value = saida.categoria;
+    document.getElementById('editSaidaPagamento').value = saida.tipo_pagamento || 'pix';
+    document.getElementById('editSaidaParcelas').value = saida.parcelas || 1;
+    document.getElementById('editSaidaParcelaAtual').value = saida.parcela_atual || 1;
+    
+    const modal = document.getElementById('modalEditarSaida');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function editEntrada(entrada) {
+    document.getElementById('editEntradaId').value = entrada.id;
+    document.getElementById('editEntradaData').value = entrada.data;
+    document.getElementById('editEntradaValor').value = entrada.valor;
+    document.getElementById('editEntradaCategoria').value = entrada.categoria;
+    document.getElementById('editEntradaDescricao').value = entrada.descricao || '';
+    
+    const modal = document.getElementById('modalEditarEntrada');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function fecharModalEditarSaida() {
+    const modal = document.getElementById('modalEditarSaida');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+function fecharModalEditarEntrada() {
+    const modal = document.getElementById('modalEditarEntrada');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+// Delete functions
+function openDeleteModal(type, id) {
+    deleteTarget = { type, id };
+    const modal = document.getElementById('modalDelete');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closeDeleteModal() {
+    const modal = document.getElementById('modalDelete');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    deleteTarget = { type: null, id: null };
+}
+
+async function confirmDelete() {
+    if (!deleteTarget.type || !deleteTarget.id) return;
+    
+    const tableName = deleteTarget.type === 'entrada' ? 'entradas' : 'saidas';
+    
+    try {
+        const response = await fetch(`${API_BASE}/${tableName}/${deleteTarget.id}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok || response.status === 204) {
+            showToast(`${deleteTarget.type === 'entrada' ? 'Entrada' : 'Saída'} excluída com sucesso!`);
+            closeDeleteModal();
+            
+            // Reload data and update dashboard
+            await loadAllData();
+            updateDashboard();
+        } else {
+            throw new Error('Erro ao excluir');
+        }
+    } catch (error) {
+        console.error('Erro ao excluir:', error);
+        showToast('Erro ao excluir registro', 'error');
+    }
+}
+
+// Handle edit form submissions
+async function handleEditSaidaSubmit(e) {
+    e.preventDefault();
+    
+    const id = document.getElementById('editSaidaId').value;
+    
+    const data = {
+        loja: document.getElementById('editSaidaLoja').value,
+        categoria: document.getElementById('editSaidaCategoria').value,
+        descricao: document.getElementById('editSaidaDescricao').value,
+        valor: parseFloat(document.getElementById('editSaidaValor').value),
+        tipo_pagamento: document.getElementById('editSaidaPagamento').value,
+        data: document.getElementById('editSaidaData').value,
+        parcelas: parseInt(document.getElementById('editSaidaParcelas').value) || 1,
+        parcela_atual: parseInt(document.getElementById('editSaidaParcelaAtual').value) || 1
+    };
+    
+    try {
+        const response = await fetch(`${API_BASE}/saidas/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        if (!response.ok) throw new Error('Erro ao atualizar');
+        
+        showToast('Saída atualizada com sucesso!');
+        fecharModalEditarSaida();
+        await loadAllData();
+        updateDashboard();
+    } catch (error) {
+        console.error('Erro ao atualizar saída:', error);
+        showToast('Erro ao atualizar saída', 'error');
+    }
+}
+
+async function handleEditEntradaSubmit(e) {
+    e.preventDefault();
+    
+    const id = document.getElementById('editEntradaId').value;
+    
+    const data = {
+        categoria: document.getElementById('editEntradaCategoria').value,
+        descricao: document.getElementById('editEntradaDescricao').value,
+        valor: parseFloat(document.getElementById('editEntradaValor').value),
+        data: document.getElementById('editEntradaData').value
+    };
+    
+    try {
+        const response = await fetch(`${API_BASE}/entradas/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        if (!response.ok) throw new Error('Erro ao atualizar');
+        
+        showToast('Entrada atualizada com sucesso!');
+        fecharModalEditarEntrada();
+        await loadAllData();
+        updateDashboard();
+    } catch (error) {
+        console.error('Erro ao atualizar entrada:', error);
+        showToast('Erro ao atualizar entrada', 'error');
+    }
 }
 
 // Update summary cards
@@ -737,3 +967,4 @@ async function applyCartaoPeriod() {
         console.error('Erro ao aplicar filtro do cartão:', error);
     }
 }
+
