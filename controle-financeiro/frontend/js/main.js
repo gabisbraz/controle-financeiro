@@ -91,6 +91,22 @@ function formatCurrency(value) {
   }).format(value);
 }
 
+// Filter items by data_input (today to today - 15 days)
+function filtrarPorDataRecente(items) {
+  const hoje = new Date();
+  const limite = new Date();
+  limite.setDate(hoje.getDate() - 15);
+
+  const hojeISO = hoje.toISOString();
+  const limiteISO = limite.toISOString();
+
+  return items.filter((item) => {
+    const dataInput = item.data_input || item.created_at || item.data_insercao;
+    if (!dataInput) return true; // Se não tiver data_input, incluir por segurança
+    return dataInput >= limiteISO && dataInput <= hojeISO;
+  });
+}
+
 // Calculate installment value
 function calcularValorParcela(valorTotal, numeroParcelas) {
   if (!valorTotal || !numeroParcelas || numeroParcelas <= 1) {
@@ -223,19 +239,23 @@ async function loadSaidas() {
 
 // Render Entradas table
 function renderEntradas() {
-  if (entradas.length === 0) {
+  // Filter by data_input (last 15 days)
+  const entradasRecentes = filtrarPorDataRecente(entradas);
+
+  if (entradasRecentes.length === 0) {
     tabelaEntradas.innerHTML = `
             <tr>
                 <td colspan="5" class="px-4 py-8 text-center text-gray-500">
                     <i class="fas fa-inbox text-4xl mb-2 block"></i>
-                    <p>Nenhuma entrada registrada</p>
+                    <p>Nenhuma entrada registrada nos últimos 15 dias</p>
                 </td>
             </tr>
         `;
+    document.getElementById("countEntradas").textContent = `0 registros`;
     return;
   }
 
-  tabelaEntradas.innerHTML = entradas
+  tabelaEntradas.innerHTML = entradasRecentes
     .map(
       (entrada) => `
         <tr class="hover:bg-gray-50 transition">
@@ -277,23 +297,31 @@ function renderEntradas() {
     `
     )
     .join("");
+  
+  document.getElementById("countEntradas").textContent = `${
+    entradasRecentes.length
+  } registro${entradasRecentes.length !== 1 ? "s" : ""}`;
 }
 
 // Render Saídas table
 function renderSaidas() {
-  if (saidas.length === 0) {
+  // Filter by data_input (last 15 days)
+  const saidasRecentes = filtrarPorDataRecente(saidas);
+
+  if (saidasRecentes.length === 0) {
     tabelaSaidas.innerHTML = `
             <tr>
                 <td colspan="7" class="px-4 py-8 text-center text-gray-500">
                     <i class="fas fa-inbox text-4xl mb-2 block"></i>
-                    <p>Nenhuma saída registrada</p>
+                    <p>Nenhuma saída registrada nos últimos 15 dias</p>
                 </td>
             </tr>
         `;
+    document.getElementById("countSaidas").textContent = `0 registros`;
     return;
   }
 
-  tabelaSaidas.innerHTML = saidas
+  tabelaSaidas.innerHTML = saidasRecentes
     .map(
       (saida) => `
         <tr class="hover:bg-gray-50 transition">
@@ -342,10 +370,15 @@ function renderSaidas() {
                 >
                     <i class="fas fa-trash-alt"></i>
                 </button>
-            </td>        </tr>
+            </td>        
+        </tr>
     `
     )
     .join("");
+  
+  document.getElementById("countSaidas").textContent = `${
+    saidasRecentes.length
+  } registro${saidasRecentes.length !== 1 ? "s" : ""}`;
 }
 
 // Handle Entrada form submit
