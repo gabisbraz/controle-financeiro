@@ -7,7 +7,7 @@ let entradas = [];
 let saidas = [];
 let filteredEntradas = [];
 let filteredSaidas = [];
-let currentPeriod = 'all';
+let currentPeriod = 'semester';
 let charts = {};
 
 // Colors for charts
@@ -24,7 +24,11 @@ const colors = {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
+    // Apply active state to 6 months button on page load
+    document.getElementById('btnSemester').classList.add('active');
+    
     await loadAllData();
+    await loadCartaoMeses(); // Carrega os meses do cartão
     initCharts();
     updateDashboard();
 });
@@ -123,6 +127,10 @@ function applyFilter(customStart = null, customEnd = null) {
                 const quarter = Math.floor(now.getMonth() / 3);
                 startDate = new Date(now.getFullYear(), quarter * 3, 1);
                 endDate = new Date(now.getFullYear(), quarter * 3 + 3, 0, 23, 59, 59);
+                break;
+            case 'semester':
+                startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+                endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
                 break;
             case 'year':
                 startDate = new Date(now.getFullYear(), 0, 1);
@@ -593,55 +601,41 @@ async function applyCartaoPeriod() {
         if (!cartao) return;
 
         const diaVencimento = parseInt(cartao.dia_vencimento);
-
-        console.log('Aplicando filtro do cartão com dia de vencimento:', diaVencimento);
         const select = document.getElementById('cartaoMes');
         const selectedMonth = select.value;
 
-        // Toggle: se o mês selecionado já está ativo, remove o filtro
-        if (currentCartaoMonth === "Todos") {
+        // Se "Todos" for selecionado, remove o filtro do cartão
+        if (!selectedMonth) {
             currentCartaoMonth = null;
-            select.value = ''; // mostra "Todos" ou placeholder
-            applyFilter(); // aplica filtro geral sem considerar cartão
+            // Restaurar filtro do período atual (semestre)
+            document.getElementById('btnSemester').classList.add('active');
+            applyFilter();
             updateDashboard();
             return;
         }
 
         currentCartaoMonth = selectedMonth;
 
-        // Aqui você vai filtrar baseado no vencimento do cartão
-        // Exemplo: considerando que filteredEntradas/filteredSaidas já existem
-        if (currentCartaoMonth) {
-            const [year, month] = currentCartaoMonth.split('-'); // formato: "YYYY-MM"
-            const startDate = new Date(year, parseInt(month) - 1, diaVencimento+1);
-            const endDate = new Date(year, parseInt(month), diaVencimento);
+        // Filtrar baseado no vencimento do cartão
+        const [year, month] = currentCartaoMonth.split('-'); // formato: "YYYY-MM"
+        const startDate = new Date(year, parseInt(month) - 1, diaVencimento + 1);
+        const endDate = new Date(year, parseInt(month), diaVencimento);
 
-            console.log(`Filtrando de ${startDate.toISOString()} até ${endDate.toISOString()}`);
-            filteredEntradas = entradas.filter(e => {
-                const date = new Date(e.data + 'T00:00:00');
-                return date >= startDate && date <= endDate;
-            });
+        console.log(`Filtrando de ${startDate.toISOString()} até ${endDate.toISOString()}`);
+        
+        // Filtrar entradas e saídas baseado no período do cartão
+        filteredEntradas = entradas.filter(e => {
+            const date = new Date(e.data + 'T00:00:00');
+            return date >= startDate && date <= endDate;
+        });
 
-            filteredSaidas = saidas.filter(s => {
-                const date = new Date(s.data + 'T00:00:00');
-                return date >= startDate && date <= endDate;
-            });
-        } else {
-            // Sem filtro: mostra todos
-            filteredEntradas = [...entradas];
-            filteredSaidas = [...saidas];
-        }
+        filteredSaidas = saidas.filter(s => {
+            const date = new Date(s.data + 'T00:00:00');
+            return date >= startDate && date <= endDate;
+        });
 
         updateDashboard();
     } catch (error) {
         console.error('Erro ao aplicar filtro do cartão:', error);
     }
 }
-
-
-document.addEventListener('DOMContentLoaded', async () => {
-    await loadAllData();
-    await loadCartaoMeses(); // ✅ Carrega os meses do cartão
-    initCharts();
-    updateDashboard();
-});

@@ -10,42 +10,114 @@ const upload = multer({ dest: 'uploads/' });
 
 // Preview Excel saidas
 router.post('/preview/saidas', upload.single('file'), (req, res) => {
-  const workbook = XLSX.readFile(req.file.path);
-  const sheets = workbook.SheetNames;
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'Nenhum arquivo enviado' });
+    }
 
-  if (!req.body.sheet) {
+    const workbook = XLSX.readFile(req.file.path);
+    const sheets = workbook.SheetNames;
+
+    if (!req.body.sheet) {
+      fs.unlinkSync(req.file.path);
+      return res.json({ sheets, data: [] });
+    }
+
+    const sheetName = req.body.sheet;
+    const sheet = workbook.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(sheet);
+
+    const dados = rows.map(row => ({
+      loja: row['Loja'] ?? '-',
+      descricao: row['Descrição'] ?? '-',
+      categoria: row['Categoria'] ?? '-',
+      data: formatarData(row['Data da compra']),
+      tipo_pagamento: row['Tipo pagamento'] ?? '-',
+      valor: row['Valor'] ?? '-'
+    }));
+
     fs.unlinkSync(req.file.path);
-    return res.json({ sheets, data: [] });
+    res.json({ sheets, data: dados });
+  } catch (error) {
+    console.error(error);
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    res.status(500).json({ message: 'Erro ao processar arquivo' });
   }
-
-  const sheetName = req.body.sheet;
-  const sheet = workbook.Sheets[sheetName];
-  const rows = XLSX.utils.sheet_to_json(sheet);
-
-  const dados = rows.map(row => ({
-    loja: row['Loja'] ?? '-',
-    descricao: row['Descrição'] ?? '-',
-    categoria: row['Categoria'] ?? '-',
-    data: formatarData(row['Data da compra']),
-    tipo_pagamento: row['Tipo pagamento'] ?? '-',
-    valor: row['Valor'] ?? '-'
-  }));
-
-  fs.unlinkSync(req.file.path);
-  res.json({ sheets, data: dados });
 });
 
 // Import Excel saidas
 router.post('/import/saidas', (req, res) => {
-  const rows = req.body;
-  let total = 0;
-  const stmt = db.prepare(`INSERT INTO saidas (loja, descricao, categoria, data, tipo_pagamento, valor) VALUES (?, ?, ?, ?, ?, ?)`);
-  rows.forEach(row => {
-    stmt.run(row.loja, row.descricao, row.categoria, row.data, row.tipo_pagamento, row.valor);
-    total++;
-  });
-  stmt.finalize();
-  res.json({ message: 'Importação realizada com sucesso', registros: total });
+  try {
+    const rows = req.body;
+    let total = 0;
+    const stmt = db.prepare(`INSERT INTO saidas (loja, descricao, categoria, data, tipo_pagamento, valor) VALUES (?, ?, ?, ?, ?, ?)`);
+    rows.forEach(row => {
+      stmt.run(row.loja, row.descricao, row.categoria, row.data, row.tipo_pagamento, row.valor);
+      total++;
+    });
+    stmt.finalize();
+    res.json({ message: 'Importação realizada com sucesso', registros: total });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erro ao importar dados' });
+  }
+});
+
+// Preview Excel entradas
+router.post('/preview/entradas', upload.single('file'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'Nenhum arquivo enviado' });
+    }
+
+    const workbook = XLSX.readFile(req.file.path);
+    const sheets = workbook.SheetNames;
+
+    if (!req.body.sheet) {
+      fs.unlinkSync(req.file.path);
+      return res.json({ sheets, data: [] });
+    }
+
+    const sheetName = req.body.sheet;
+    const sheet = workbook.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(sheet);
+
+    const dados = rows.map(row => ({
+      categoria: row['Categoria'] ?? '-',
+      descricao: row['Descrição'] ?? '-',
+      valor: row['Valor'] ?? '-',
+      data: formatarData(row['Data'])
+    }));
+
+    fs.unlinkSync(req.file.path);
+    res.json({ sheets, data: dados });
+  } catch (error) {
+    console.error(error);
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    res.status(500).json({ message: 'Erro ao processar arquivo' });
+  }
+});
+
+// Import Excel entradas
+router.post('/import/entradas', (req, res) => {
+  try {
+    const rows = req.body;
+    let total = 0;
+    const stmt = db.prepare(`INSERT INTO entradas (categoria, descricao, valor, data) VALUES (?, ?, ?, ?)`);
+    rows.forEach(row => {
+      stmt.run(row.categoria, row.descricao, row.valor, row.data);
+      total++;
+    });
+    stmt.finalize();
+    res.json({ message: 'Importação realizada com sucesso', registros: total });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erro ao importar dados' });
+  }
 });
 
 // Export Excel completo

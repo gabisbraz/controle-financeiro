@@ -10,7 +10,8 @@ db.serialize(() => {
       categoria TEXT,
       descricao TEXT,
       valor REAL,
-      data TEXT
+      data TEXT,
+      data_input TEXT
     )
   `);
 
@@ -22,7 +23,8 @@ db.serialize(() => {
       descricao TEXT,
       tipo_pagamento TEXT,
       valor REAL,
-      data TEXT
+      data TEXT,
+      data_input TEXT
     )
   `);
 
@@ -33,6 +35,14 @@ db.serialize(() => {
       dia_vencimento INTEGER NOT NULL
     )
   `);
+
+  // Adicionar coluna data_input se não existir (para bancos existentes)
+  db.run(`ALTER TABLE entradas ADD COLUMN data_input TEXT`, (err) => {
+    // Ignorar erro se a coluna já existir
+  });
+  db.run(`ALTER TABLE saidas ADD COLUMN data_input TEXT`, (err) => {
+    // Ignorar erro se a coluna já existir
+  });
 });
 
 module.exports = db;

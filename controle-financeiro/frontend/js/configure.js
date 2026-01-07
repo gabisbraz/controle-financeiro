@@ -22,15 +22,24 @@ function preview() {
     method: "POST",
     body: formData
   })
-    .then(res => res.json())
+    .then(res => {
+      if (!res.ok) throw new Error("Erro ao carregar arquivo");
+      return res.json();
+    })
     .then(json => {
       // Se tiver mais de uma sheet → mostrar select
-      if (json.sheets.length > 1) {
+      if (json.sheets && json.sheets.length > 1) {
         mostrarSelectSheets(json.sheets);
-      } else {
+      } else if (json.sheets && json.sheets.length === 1) {
         // Se só tiver uma → carrega direto
         carregarSheet(json.sheets[0]);
+      } else {
+        alert("Nenhuma aba encontrada no arquivo.");
       }
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Erro ao visualizar arquivo. Verifique se é um Excel válido.");
     });
 }
 
@@ -63,11 +72,18 @@ function carregarSheet(sheetName) {
     method: "POST",
     body: formData
   })
-    .then(res => res.json())
+    .then(res => {
+      if (!res.ok) throw new Error("Erro ao carregar aba");
+      return res.json();
+    })
     .then(json => {
       dadosPreview = json.data;
       renderTabela(dadosPreview);
       document.getElementById("confirmarBtn").disabled = false;
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Erro ao carregar dados da aba.");
     });
 }
 
@@ -183,14 +199,22 @@ function previewEntrada() {
     method: "POST",
     body: formData
   })
-    .then(res => res.json())
+    .then(res => {
+      if (!res.ok) throw new Error("Erro ao carregar arquivo");
+      return res.json();
+    })
     .then(json => {
-      if (json.sheets.length > 1) {
+      if (json.sheets && json.sheets.length > 1) {
         mostrarSelectSheetsEntrada(json.sheets);
-      } else {
-        console.log("ERROOOO");
+      } else if (json.sheets && json.sheets.length === 1) {
         carregarSheetEntrada(json.sheets[0]);
+      } else {
+        alert("Nenhuma aba encontrada no arquivo.");
       }
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Erro ao visualizar arquivo. Verifique se é um Excel válido.");
     });
 }
 
@@ -223,12 +247,19 @@ function carregarSheetEntrada(sheetName) {
     method: "POST",
     body: formData
   })
-    .then(res => res.json())
+    .then(res => {
+      if (!res.ok) throw new Error("Erro ao carregar aba");
+      return res.json();
+    })
     .then(json => {
       console.log(json);
       dadosPreviewEntrada = json.data;
       renderTabelaEntrada(dadosPreviewEntrada);
       document.getElementById("confirmarEntradaBtn").disabled = false;
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Erro ao carregar dados da aba.");
     });
 }
 

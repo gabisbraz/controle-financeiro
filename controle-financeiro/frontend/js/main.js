@@ -128,11 +128,26 @@ function showToast(message, type = "success") {
 
 // Update summary cards
 function updateSummary() {
-  const totalEntradas = entradas.reduce(
+  // Filtrar para o mês atual
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+
+  const entradasMes = entradas.filter(e => {
+    const date = new Date(e.data + 'T00:00:00');
+    return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+  });
+
+  const saidasMes = saidas.filter(s => {
+    const date = new Date(s.data + 'T00:00:00');
+    return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+  });
+
+  const totalEntradas = entradasMes.reduce(
     (sum, e) => sum + (parseFloat(e.valor) || 0),
     0
   );
-  const totalSaidas = saidas.reduce(
+  const totalSaidas = saidasMes.reduce(
     (sum, s) => sum + (parseFloat(s.valor) || 0),
     0
   );
@@ -149,12 +164,16 @@ function updateSummary() {
     saldo >= 0 ? "text-blue-600" : "text-red-600"
   }`;
 
+  // Opcional: Manter a contagem de registros como total ou filtrada?
+  // Mantendo a contagem total de registros conforme comportamento original,
+  // mas也可以 apenas mostrar os registros do mês se preferir.
+  // Mantendo a contagem total de registros no banco de dados.
   document.getElementById("countEntradas").textContent = `${
-    entradas.length
-  } registro${entradas.length !== 1 ? "s" : ""}`;
+    entradasMes.length
+  } registro${entradasMes.length !== 1 ? "s" : ""} este mês`;
   document.getElementById("countSaidas").textContent = `${
-    saidas.length
-  } registro${saidas.length !== 1 ? "s" : ""}`;
+    saidasMes.length
+  } registro${saidasMes.length !== 1 ? "s" : ""} este mês`;
 
   // Pulse animation
   document

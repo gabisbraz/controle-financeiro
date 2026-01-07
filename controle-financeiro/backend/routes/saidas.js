@@ -12,10 +12,12 @@ router.get('/', (req, res) => {
 // POST saida
 router.post('/', (req, res) => {
   const { loja, categoria, descricao, tipo_pagamento, valor, data } = req.body;
+  const data_input = new Date().toISOString();
+  
   db.run(
-    `INSERT INTO saidas (loja, categoria, descricao, tipo_pagamento, valor, data)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [loja, categoria, descricao, tipo_pagamento, valor, data],
+    `INSERT INTO saidas (loja, categoria, descricao, tipo_pagamento, valor, data, data_input)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [loja, categoria, descricao, tipo_pagamento, valor, data, data_input],
     function () {
       res.status(201).json({ id: this.lastID });
     }
