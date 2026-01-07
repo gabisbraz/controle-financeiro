@@ -4,7 +4,7 @@ const router = express.Router();
 
 // GET entradas
 router.get('/', (req, res) => {
-  db.all('SELECT * FROM entradas ORDER BY data DESC', [], (err, rows) => {
+  db.all('SELECT * FROM entradas WHERE data_input >= datetime("now", "-15 days") ORDER BY data DESC', [], (err, rows) => {
     res.json({ data: rows });
   });
 });

@@ -5,7 +5,7 @@ const router = express.Router();
 
 // GET saidas
 router.get('/', (req, res) => {
-  db.all('SELECT * FROM saidas ORDER BY data DESC', [], (err, rows) => {
+  db.all('SELECT * FROM saidas WHERE data_input >= datetime("now", "-15 days") ORDER BY data DESC', [], (err, rows) => {
     if (err) return res.status(500).json({ message: 'Erro ao buscar saídas' });
     res.json({ data: rows });
   });
