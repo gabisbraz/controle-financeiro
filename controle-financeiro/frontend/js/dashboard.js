@@ -561,6 +561,60 @@ function updateRecentTransactions() {
     `).join('');
 }
 
+// Update recent transactions table with parcela info
+function updateRecentTransactionsOld() {
+    const tbody = document.getElementById('tabelaTransacoes');
+    
+    // Combine and sort all transactions
+    const allTransactions = [
+        ...filteredEntradas.map(e => ({
+            ...e,
+            tipo: 'entrada',
+            descricaoFull: e.descricao || e.categoria
+        })),
+        ...filteredSaidas.map(s => ({
+            ...s,
+            tipo: 'saida',
+            descricaoFull: `${s.loja} - ${s.descricao}`,
+            parcelaInfo: s.parcelas > 1 ? ` (${s.parcela_atual}/${s.parcelas})` : ''
+        }))
+    ].sort((a, b) => new Date(b.data) - new Date(a.data))
+    
+    if (allTransactions.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                    <i class="fas fa-inbox text-4xl mb-2 block"></i>
+                    <p>Nenhuma transação encontrada</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = allTransactions.map(t => `
+        <tr class="hover:bg-gray-50 transition">
+            <td class="px-4 py-3 text-sm text-gray-600">${formatDate(t.data)}</td>
+            <td class="px-4 py-3">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${t.tipo === 'entrada' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}">
+                    <i class="fas ${t.tipo === 'entrada' ? 'fa-arrow-up' : 'fa-arrow-down'} mr-1"></i>
+                    ${t.tipo === 'entrada' ? 'Entrada' : 'Saída'}
+                </span>
+            </td>
+            <td class="px-4 py-3 text-sm text-gray-900">${t.descricaoFull}${t.parcelaInfo || ''}</td>
+            <td class="px-4 py-3">
+                <span class="badge-categoria">
+                    <i class="fas fa-tag ${t.tipo === 'entrada' ? 'text-emerald-500' : 'text-red-500'}"></i>
+                    ${t.categoria}
+                </span>
+            </td>
+            <td class="px-4 py-3 text-right font-semibold ${t.tipo === 'entrada' ? 'text-emerald-600' : 'text-red-600'}">
+                ${t.tipo === 'entrada' ? '+' : '-'} ${formatCurrency(t.valor)}
+            </td>
+        </tr>
+    `).join('');
+}
+
 async function loadCartaoMeses() {
     try {
         // Buscar dados do cartão para saber o dia de vencimento

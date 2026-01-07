@@ -91,6 +91,15 @@ function formatCurrency(value) {
   }).format(value);
 }
 
+// Calculate installment value
+function calcularValorParcela(valorTotal, numeroParcelas) {
+  if (!valorTotal || !numeroParcelas || numeroParcelas <= 1) {
+    return valorTotal;
+  }
+  const valorParcela = valorTotal / numeroParcelas;
+  return formatCurrency(valorParcela);
+}
+
 // Format date
 function formatDate(dateString) {
   const date = new Date(dateString + "T00:00:00");
@@ -275,7 +284,7 @@ function renderSaidas() {
   if (saidas.length === 0) {
     tabelaSaidas.innerHTML = `
             <tr>
-                <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                <td colspan="7" class="px-4 py-8 text-center text-gray-500">
                     <i class="fas fa-inbox text-4xl mb-2 block"></i>
                     <p>Nenhuma saída registrada</p>
                 </td>
@@ -307,6 +316,9 @@ function renderSaidas() {
                   .replace(/[\u0300-\u036f]/g, "")}">
                     ${saida.tipo_pagamento}
                 </span>
+            </td>
+            <td class="px-4 py-3 text-sm text-gray-600">
+                ${saida.parcelas > 1 ? `${saida.parcela_atual}/${saida.parcelas}` : '-'}
             </td>
             <td class="px-4 py-3 text-right valor-negativo">${formatCurrency(
               saida.valor
@@ -394,6 +406,7 @@ async function handleSaidaSubmit(e) {
     .getElementById("saidaTipoPagamento")
     .value?.trim();
   const data = document.getElementById("saidaData").value;
+  const parcelas = parseInt(document.getElementById("saidaParcelas").value) || 1;
 
   if (!loja || !categoria || !descricao || !valor || !tipo_pagamento || !data) {
     showToast("Por favor, preencha todos os campos obrigatórios", "error");
@@ -412,6 +425,7 @@ async function handleSaidaSubmit(e) {
     valor,
     tipo_pagamento,
     data,
+    parcelas,
   };
 
   const isEdit = editMode.type === "saida";
@@ -449,6 +463,8 @@ async function handleSaidaSubmit(e) {
       document.getElementById("saidaData").value = new Date()
         .toISOString()
         .split("T")[0];
+      // Resetar valor por parcela
+      document.getElementById("saidaValorParcela").value = "";
       editMode = { type: null, id: null };
       loadSaidas();
     } else {
@@ -539,6 +555,8 @@ function editSaida(saida) {
   document.getElementById("editSaidaValor").value = saida.valor;
   document.getElementById("editSaidaPagamento").value = saida.tipo_pagamento;
   document.getElementById("editSaidaData").value = saida.data;
+  document.getElementById("editSaidaParcelas").value = saida.parcelas || 1;
+  document.getElementById("editSaidaParcelaAtual").value = saida.parcela_atual || 1;
 
   const modal = document.getElementById("modalEditarSaida");
   modal.classList.remove("hidden");
@@ -565,6 +583,8 @@ document
       valor: parseFloat(document.getElementById("editSaidaValor").value),
       tipo_pagamento: document.getElementById("editSaidaPagamento").value,
       data: document.getElementById("editSaidaData").value,
+      parcelas: parseInt(document.getElementById("editSaidaParcelas").value) || 1,
+      parcela_atual: parseInt(document.getElementById("editSaidaParcelaAtual").value) || 1,
     };
 
     try {
@@ -646,4 +666,47 @@ function preencherCategorias() {
 
 document.addEventListener("DOMContentLoaded", () => {
   preencherCategorias();
+  
+  // Adicionar event listeners para cálculo automático de parcelas
+  const saidaValor = document.getElementById("saidaValor");
+  const saidaParcelas = document.getElementById("saidaParcelas");
+  const saidaValorParcela = document.getElementById("saidaValorParcela");
+  const saidaTipoPagamento = document.getElementById("saidaTipoPagamento");
+  const camposParcelamento = document.getElementById("camposParcelamento");
+  
+  if (saidaValor && saidaParcelas && saidaValorParcela) {
+    function calcularParcela() {
+      const valor = parseFloat(saidaValor.value) || 0;
+      const parcelas = parseInt(saidaParcelas.value) || 1;
+      if (parcelas > 1) {
+        const valorParcela = valor / parcelas;
+        saidaValorParcela.value = formatCurrency(valorParcela);
+      } else {
+        saidaValorParcela.value = "";
+      }
+    }
+    
+    saidaValor.addEventListener("input", calcularParcela);
+    saidaParcelas.addEventListener("change", calcularParcela);
+  }
+  
+  // Mostrar/ocultar campos de parcelamento baseado no tipo de pagamento
+  if (saidaTipoPagamento && camposParcelamento) {
+    function toggleParcelamento() {
+      if (saidaTipoPagamento.value === "Crédito") {
+        camposParcelamento.classList.remove("hidden");
+      } else {
+        camposParcelamento.classList.add("hidden");
+        // Resetar parcelas para 1x quando não for crédito
+        if (saidaParcelas) {
+          saidaParcelas.value = "1";
+        }
+        if (saidaValorParcela) {
+          saidaValorParcela.value = "";
+        }
+      }
+    }
+    
+    saidaTipoPagamento.addEventListener("change", toggleParcelamento);
+  }
 });

@@ -24,7 +24,10 @@ db.serialize(() => {
       tipo_pagamento TEXT,
       valor REAL,
       data TEXT,
-      data_input TEXT
+      data_input TEXT,
+      parcelas INTEGER DEFAULT 1,
+      parcela_atual INTEGER DEFAULT 1,
+      parcela_id TEXT
     )
   `);
 
@@ -36,11 +39,20 @@ db.serialize(() => {
     )
   `);
 
-  // Adicionar coluna data_input se não existir (para bancos existentes)
+  // Adicionar colunas de parcelamento se não existirem
   db.run(`ALTER TABLE entradas ADD COLUMN data_input TEXT`, (err) => {
     // Ignorar erro se a coluna já existir
   });
   db.run(`ALTER TABLE saidas ADD COLUMN data_input TEXT`, (err) => {
+    // Ignorar erro se a coluna já existir
+  });
+  db.run(`ALTER TABLE saidas ADD COLUMN parcelas INTEGER DEFAULT 1`, (err) => {
+    // Ignorar erro se a coluna já existir
+  });
+  db.run(`ALTER TABLE saidas ADD COLUMN parcela_atual INTEGER DEFAULT 1`, (err) => {
+    // Ignorar erro se a coluna já existir
+  });
+  db.run(`ALTER TABLE saidas ADD COLUMN parcela_id TEXT`, (err) => {
     // Ignorar erro se a coluna já existir
   });
 });
