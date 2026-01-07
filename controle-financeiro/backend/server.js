@@ -17,6 +17,7 @@ const categoriasRoutes = require('./routes/categorias');
 const tiposPagamentoRoutes = require('./routes/tipos_pagamento');
 const categoriasEntradasRoutes = require('./routes/categorias_entradas');
 const lojasRoutes = require('./routes/lojas');
+const databaseRoutes = require('./routes/database');
 
 app.use('/tables/entradas', entradasRoutes);
 app.use('/tables/saidas', saidasRoutes);
@@ -27,6 +28,7 @@ app.use('/categorias/saidas', categoriasRoutes);
 app.use('/tipos-pagamento', tiposPagamentoRoutes);
 app.use('/categorias/entradas', categoriasEntradasRoutes);
 app.use('/lojas', lojasRoutes);
+app.use('/database', databaseRoutes);
 
 // Root
 app.get('/', (req, res) => res.send('API Controle Financeiro rodando 🚀'));
