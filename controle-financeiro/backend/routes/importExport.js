@@ -3,7 +3,13 @@ const multer = require('multer');
 const XLSX = require('xlsx');
 const fs = require('fs');
 const db = require('../db');
-const { formatarData } = require('../helpers');
+const { 
+  formatarData,
+  getOrCreateCategoriaSaida,
+  getOrCreateTipoPagamento,
+  getOrCreateLoja,
+  getOrCreateCategoriaEntrada
+} = require('../helpers');
 
 const router = express.Router();
 const upload = multer({ dest: 'uploads/' });
@@ -48,16 +54,25 @@ router.post('/preview/saidas', upload.single('file'), (req, res) => {
 });
 
 // Import Excel saidas
-router.post('/import/saidas', (req, res) => {
+router.post('/import/saidas', async (req, res) => {
   try {
     const rows = req.body;
     let total = 0;
-    const stmt = db.prepare(`INSERT INTO saidas (loja, descricao, categoria, data, tipo_pagamento, valor) VALUES (?, ?, ?, ?, ?, ?)`);
-    rows.forEach(row => {
-      stmt.run(row.loja, row.descricao, row.categoria, row.data, row.tipo_pagamento, row.valor);
+    
+    // Processar cada linha e obter/criar os IDs de referência
+    for (const row of rows) {
+      const categoriaId = await getOrCreateCategoriaSaida(row.categoria);
+      const tipoPagamentoId = await getOrCreateTipoPagamento(row.tipo_pagamento);
+      const lojaId = await getOrCreateLoja(row.loja);
+      
+      db.run(
+        `INSERT INTO saidas (loja, loja_id, descricao, categoria, categoria_id, data, tipo_pagamento, tipo_pagamento_id, valor) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [row.loja, lojaId, row.descricao, row.categoria, categoriaId, row.data, row.tipo_pagamento, tipoPagamentoId, row.valor]
+      );
       total++;
-    });
-    stmt.finalize();
+    }
+    
     res.json({ message: 'Importação realizada com sucesso', registros: total });
   } catch (error) {
     console.error(error);
@@ -103,16 +118,23 @@ router.post('/preview/entradas', upload.single('file'), (req, res) => {
 });
 
 // Import Excel entradas
-router.post('/import/entradas', (req, res) => {
+router.post('/import/entradas', async (req, res) => {
   try {
     const rows = req.body;
     let total = 0;
-    const stmt = db.prepare(`INSERT INTO entradas (categoria, descricao, valor, data) VALUES (?, ?, ?, ?)`);
-    rows.forEach(row => {
-      stmt.run(row.categoria, row.descricao, row.valor, row.data);
+    
+    // Processar cada linha e obter/criar os IDs de referência
+    for (const row of rows) {
+      const categoriaId = await getOrCreateCategoriaEntrada(row.categoria);
+      
+      db.run(
+        `INSERT INTO entradas (categoria, categoria_id, descricao, valor, data) 
+         VALUES (?, ?, ?, ?, ?)`,
+        [row.categoria, categoriaId, row.descricao, row.valor, row.data]
+      );
       total++;
-    });
-    stmt.finalize();
+    }
+    
     res.json({ message: 'Importação realizada com sucesso', registros: total });
   } catch (error) {
     console.error(error);

@@ -8,6 +8,7 @@ db.serialize(() => {
     CREATE TABLE IF NOT EXISTS entradas (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       categoria TEXT,
+      categoria_id INTEGER,
       descricao TEXT,
       valor REAL,
       data TEXT,
@@ -19,9 +20,12 @@ db.serialize(() => {
     CREATE TABLE IF NOT EXISTS saidas (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       loja TEXT,
+      loja_id INTEGER,
       categoria TEXT,
+      categoria_id INTEGER,
       descricao TEXT,
       tipo_pagamento TEXT,
+      tipo_pagamento_id INTEGER,
       valor REAL,
       data TEXT,
       data_input TEXT,
@@ -42,7 +46,7 @@ db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS categorias_saidas (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nome TEXT NOT NULL,
+      nome TEXT NOT NULL UNIQUE,
       ordem INTEGER DEFAULT 0,
       ativa INTEGER DEFAULT 1,
       data_criacao TEXT DEFAULT CURRENT_TIMESTAMP
@@ -72,8 +76,11 @@ db.serialize(() => {
     }
   });
 
-  // Adicionar colunas de parcelamento se não existirem
+  // Adicionar colunas de parcelamento e referências se não existirem
   db.run(`ALTER TABLE entradas ADD COLUMN data_input TEXT`, (err) => {
+    // Ignorar erro se a coluna já existir
+  });
+  db.run(`ALTER TABLE entradas ADD COLUMN categoria_id INTEGER`, (err) => {
     // Ignorar erro se a coluna já existir
   });
   db.run(`ALTER TABLE saidas ADD COLUMN data_input TEXT`, (err) => {
@@ -88,12 +95,21 @@ db.serialize(() => {
   db.run(`ALTER TABLE saidas ADD COLUMN parcela_id TEXT`, (err) => {
     // Ignorar erro se a coluna já existir
   });
+  db.run(`ALTER TABLE saidas ADD COLUMN loja_id INTEGER`, (err) => {
+    // Ignorar erro se a coluna já existir
+  });
+  db.run(`ALTER TABLE saidas ADD COLUMN categoria_id INTEGER`, (err) => {
+    // Ignorar erro se a coluna já existir
+  });
+  db.run(`ALTER TABLE saidas ADD COLUMN tipo_pagamento_id INTEGER`, (err) => {
+    // Ignorar erro se a coluna já existir
+  });
 
   // Tabela de tipos de pagamento
   db.run(`
     CREATE TABLE IF NOT EXISTS tipos_pagamento (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nome TEXT NOT NULL,
+      nome TEXT NOT NULL UNIQUE,
       ordem INTEGER DEFAULT 0,
       ativo INTEGER DEFAULT 1,
       data_criacao TEXT DEFAULT CURRENT_TIMESTAMP
@@ -122,7 +138,7 @@ db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS categorias_entradas (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nome TEXT NOT NULL,
+      nome TEXT NOT NULL UNIQUE,
       ordem INTEGER DEFAULT 0,
       ativo INTEGER DEFAULT 1,
       data_criacao TEXT DEFAULT CURRENT_TIMESTAMP
