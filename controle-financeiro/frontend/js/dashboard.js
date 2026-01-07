@@ -158,7 +158,148 @@ function applyFilter(customStart = null, customEnd = null) {
 function updateDashboard() {
     updateSummaryCards();
     updateCharts();
-    updateRecentTransactions();
+    updateTables();
+}
+
+// Switch between tabs
+function switchTab(tabName) {
+    // Remove active class from all tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active', 'border-emerald-500', 'text-emerald-600');
+        btn.classList.add('border-transparent', 'text-gray-500');
+    });
+    
+    // Hide all tab content
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.add('hidden');
+    });
+    
+    // Add active class to selected tab
+    const selectedTab = document.getElementById(`tab-${tabName}`);
+    selectedTab.classList.add('active', 'border-emerald-500', 'text-emerald-600');
+    selectedTab.classList.remove('border-transparent', 'text-gray-500');
+    
+    // Show selected content
+    document.getElementById(`content-${tabName}`).classList.remove('hidden');
+}
+
+// Update all tables
+function updateTables() {
+    renderTabelaSaidas();
+    renderTabelaEntradas();
+}
+
+// Render tabela de saídas
+function renderTabelaSaidas() {
+    const tbody = document.getElementById('tabelaSaidas');
+    
+    if (filteredSaidas.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                    <i class="fas fa-inbox text-4xl mb-2 block"></i>
+                    <p>Nenhuma saída encontrada</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    // Sort by date descending
+    const sortedSaidas = [...filteredSaidas].sort((a, b) => new Date(b.data) - new Date(a.data));
+    
+    tbody.innerHTML = sortedSaidas.map(s => `
+        <tr class="hover:bg-gray-50 transition">
+            <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">${formatDate(s.data)}</td>
+            <td class="px-4 py-3 text-sm text-gray-900">${s.descricao || '-'}</td>
+            <td class="px-4 py-3 text-sm text-gray-600">${s.loja || '-'}</td>
+            <td class="px-4 py-3 text-sm">
+                ${s.parcelas > 1 
+                    ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                        <i class="fas fa-layer-group mr-1"></i>
+                        ${s.parcela_atual}/${s.parcelas}
+                       </span>` 
+                    : '<span class="text-gray-400">-</span>'}
+            </td>
+            <td class="px-4 py-3">
+                <span class="badge-categoria">
+                    <i class="fas fa-tag text-red-500"></i>
+                    ${s.categoria}
+                </span>
+            </td>
+            <td class="px-4 py-3">
+                <span class="badge badge-${getTipoPagamentoClass(s.tipo_pagamento)}">
+                    ${getTipoPagamentoIcon(s.tipo_pagamento)}
+                    ${s.tipo_pagamento || '-'}
+                </span>
+            </td>
+            <td class="px-4 py-3 text-right font-semibold text-red-600 whitespace-nowrap">
+                - ${formatCurrency(s.valor)}
+            </td>
+        </tr>
+    `).join('');
+}
+
+// Render tabela de entradas
+function renderTabelaEntradas() {
+    const tbody = document.getElementById('tabelaEntradas');
+    
+    if (filteredEntradas.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="4" class="px-4 py-8 text-center text-gray-500">
+                    <i class="fas fa-inbox text-4xl mb-2 block"></i>
+                    <p>Nenhuma entrada encontrada</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    // Sort by date descending
+    const sortedEntradas = [...filteredEntradas].sort((a, b) => new Date(b.data) - new Date(a.data));
+    
+    tbody.innerHTML = sortedEntradas.map(e => `
+        <tr class="hover:bg-gray-50 transition">
+            <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">${formatDate(e.data)}</td>
+            <td class="px-4 py-3 text-sm text-gray-900">${e.descricao || e.categoria}</td>
+            <td class="px-4 py-3">
+                <span class="badge-categoria">
+                    <i class="fas fa-tag text-emerald-500"></i>
+                    ${e.categoria}
+                </span>
+            </td>
+            <td class="px-4 py-3 text-right font-semibold text-emerald-600 whitespace-nowrap">
+                + ${formatCurrency(e.valor)}
+            </td>
+        </tr>
+    `).join('');
+}
+
+// Get CSS class for payment type
+function getTipoPagamentoClass(tipo) {
+    const tipos = {
+        'pix': 'pix',
+        'credito': 'credito',
+        'débito': 'debito',
+        'debito': 'debito',
+        'dinheiro': 'dinheiro',
+        'boleto': 'boleto'
+    };
+    return tipos[tipo?.toLowerCase()] || '';
+}
+
+// Get icon for payment type
+function getTipoPagamentoIcon(tipo) {
+    const icons = {
+        'pix': '<i class="fab fa-pix mr-1"></i>',
+        'credito': '<i class="fas fa-credit-card mr-1"></i>',
+        'débito': '<i class="fas fa-credit-card mr-1"></i>',
+        'debito': '<i class="fas fa-credit-card mr-1"></i>',
+        'dinheiro': '<i class="fas fa-money-bill-wave mr-1"></i>',
+        'boleto': '<i class="fas fa-barcode mr-1"></i>'
+    };
+    return icons[tipo?.toLowerCase()] || '';
 }
 
 // Update summary cards
@@ -506,121 +647,6 @@ function getTopLojas(limit = 10) {
         labels: sorted.map(([label]) => label),
         values: sorted.map(([, value]) => value)
     };
-}
-
-// Update recent transactions table
-function updateRecentTransactions() {
-    const tbody = document.getElementById('tabelaTransacoes');
-    
-    // Combine and sort all transactions
-    const allTransactions = [
-        ...filteredEntradas.map(e => ({
-            ...e,
-            tipo: 'entrada',
-            descricaoFull: e.descricao || e.categoria
-        })),
-        ...filteredSaidas.map(s => ({
-            ...s,
-            tipo: 'saida',
-            descricaoFull: `${s.loja} - ${s.descricao}`
-        }))
-    ].sort((a, b) => new Date(b.data) - new Date(a.data))
-    
-    if (allTransactions.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="6" class="px-4 py-8 text-center text-gray-500">
-                    <i class="fas fa-inbox text-4xl mb-2 block"></i>
-                    <p>Nenhuma transação encontrada</p>
-                </td>
-            </tr>
-        `;
-        return;
-    }
-    
-    tbody.innerHTML = allTransactions.map(t => `
-        <tr class="hover:bg-gray-50 transition">
-            <td class="px-4 py-3 text-sm text-gray-600">${formatDate(t.data)}</td>
-            <td class="px-4 py-3">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${t.tipo === 'entrada' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}">
-                    <i class="fas ${t.tipo === 'entrada' ? 'fa-arrow-up' : 'fa-arrow-down'} mr-1"></i>
-                    ${t.tipo === 'entrada' ? 'Entrada' : 'Saída'}
-                </span>
-            </td>
-            <td class="px-4 py-3 text-sm text-gray-900">${t.descricaoFull}</td>
-            <td class="px-4 py-3 text-sm">
-                ${t.parcelas > 1 
-                    ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                        <i class="fas fa-layer-group mr-1"></i>
-                        ${t.parcela_atual}/${t.parcelas}
-                       </span>` 
-                    : '<span class="text-gray-400">-</span>'}
-            </td>
-            <td class="px-4 py-3">
-                <span class="badge-categoria">
-                    <i class="fas fa-tag ${t.tipo === 'entrada' ? 'text-emerald-500' : 'text-red-500'}"></i>
-                    ${t.categoria}
-                </span>
-            </td>
-            <td class="px-4 py-3 text-right font-semibold ${t.tipo === 'entrada' ? 'text-emerald-600' : 'text-red-600'}">
-                ${t.tipo === 'entrada' ? '+' : '-'} ${formatCurrency(t.valor)}
-            </td>
-        </tr>
-    `).join('');
-}
-
-// Update recent transactions table with parcela info
-function updateRecentTransactionsOld() {
-    const tbody = document.getElementById('tabelaTransacoes');
-    
-    // Combine and sort all transactions
-    const allTransactions = [
-        ...filteredEntradas.map(e => ({
-            ...e,
-            tipo: 'entrada',
-            descricaoFull: e.descricao || e.categoria
-        })),
-        ...filteredSaidas.map(s => ({
-            ...s,
-            tipo: 'saida',
-            descricaoFull: `${s.loja} - ${s.descricao}`,
-            parcelaInfo: s.parcelas > 1 ? ` (${s.parcela_atual}/${s.parcelas})` : ''
-        }))
-    ].sort((a, b) => new Date(b.data) - new Date(a.data))
-    
-    if (allTransactions.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="6" class="px-4 py-8 text-center text-gray-500">
-                    <i class="fas fa-inbox text-4xl mb-2 block"></i>
-                    <p>Nenhuma transação encontrada</p>
-                </td>
-            </tr>
-        `;
-        return;
-    }
-    
-    tbody.innerHTML = allTransactions.map(t => `
-        <tr class="hover:bg-gray-50 transition">
-            <td class="px-4 py-3 text-sm text-gray-600">${formatDate(t.data)}</td>
-            <td class="px-4 py-3">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${t.tipo === 'entrada' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}">
-                    <i class="fas ${t.tipo === 'entrada' ? 'fa-arrow-up' : 'fa-arrow-down'} mr-1"></i>
-                    ${t.tipo === 'entrada' ? 'Entrada' : 'Saída'}
-                </span>
-            </td>
-            <td class="px-4 py-3 text-sm text-gray-900">${t.descricaoFull}${t.parcelaInfo || ''}</td>
-            <td class="px-4 py-3">
-                <span class="badge-categoria">
-                    <i class="fas fa-tag ${t.tipo === 'entrada' ? 'text-emerald-500' : 'text-red-500'}"></i>
-                    ${t.categoria}
-                </span>
-            </td>
-            <td class="px-4 py-3 text-right font-semibold ${t.tipo === 'entrada' ? 'text-emerald-600' : 'text-red-600'}">
-                ${t.tipo === 'entrada' ? '+' : '-'} ${formatCurrency(t.valor)}
-            </td>
-        </tr>
-    `).join('');
 }
 
 async function loadCartaoMeses() {
