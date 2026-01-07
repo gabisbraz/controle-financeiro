@@ -85,10 +85,10 @@ router.post('/preview/entradas', upload.single('file'), (req, res) => {
     const rows = XLSX.utils.sheet_to_json(sheet);
 
     const dados = rows.map(row => ({
+      descricao: row['Nome'] ?? '-',
       categoria: row['Categoria'] ?? '-',
-      descricao: row['Descrição'] ?? '-',
-      valor: row['Valor'] ?? '-',
-      data: formatarData(row['Data'])
+      data: formatarData(row['Data da entrada']),
+      valor: row['Valor'] ?? '-'
     }));
 
     fs.unlinkSync(req.file.path);
