@@ -491,4 +491,410 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  // Carregar tipos de pagamento
+  carregarTiposPagamento();
+  
+  // Adicionar event listener para o input de tipo de pagamento
+  const inputTipoPagamento = document.getElementById('novoTipoPagamento');
+  if (inputTipoPagamento) {
+    inputTipoPagamento.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        salvarTipoPagamento();
+      }
+    });
+  }
+
+  // Carregar categorias de entrada
+  carregarCategoriasEntrada();
+  
+  // Adicionar event listener para o input de categoria de entrada
+  const inputCategoriaEntrada = document.getElementById('novaCategoriaEntrada');
+  if (inputCategoriaEntrada) {
+    inputCategoriaEntrada.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        salvarCategoriaEntrada();
+      }
+    });
+  }
+
+  // Carregar lojas
+  carregarLojas();
+  
+  // Adicionar event listener para o input de loja
+  const inputLoja = document.getElementById('novaLoja');
+  if (inputLoja) {
+    inputLoja.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        salvarLoja();
+      }
+    });
+  }
 });
+
+// ================= CATEGORIAS DE ENTRADA =================
+
+function carregarCategoriasEntrada() {
+  const tabela = document.getElementById('tabelaCategoriasEntrada');
+  if (!tabela) return;
+
+  fetch('http://localhost:3000/categorias/entradas')
+    .then(res => {
+      if (!res.ok) throw new Error('Erro ao carregar categorias de entrada');
+      return res.json();
+    })
+    .then(json => {
+      const categorias = json.data || [];
+      renderizarTabelaCategoriasEntrada(categorias);
+    })
+    .catch(err => {
+      console.error(err);
+      tabela.innerHTML = `
+        <tr>
+          <td colspan="4" class="px-4 py-8 text-center text-red-500">
+            <i class="fas fa-exclamation-circle text-2xl"></i>
+            <p class="mt-2">Erro ao carregar categorias de entrada. Tente novamente.</p>
+          </td>
+        </tr>
+      `;
+    });
+}
+
+function renderizarTabelaCategoriasEntrada(categorias) {
+  const tabela = document.getElementById('tabelaCategoriasEntrada');
+
+  if (!tabela) return;
+
+  if (categorias.length === 0) {
+    tabela.innerHTML = `
+      <tr>
+        <td colspan="4" class="px-4 py-8 text-center text-gray-500">
+          <i class="fas fa-arrow-up text-4xl mb-2"></i>
+          <p>Nenhuma categoria de entrada cadastrada</p>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tabela.innerHTML = categorias
+    .map(cat => `
+      <tr class="hover:bg-gray-50 transition">
+        <td class="px-4 py-3 text-sm text-gray-600">${cat.id}</td>
+        <td class="px-4 py-3 text-sm font-medium text-gray-900">${escapeHtml(cat.nome)}</td>
+        <td class="px-4 py-3 text-sm text-gray-600">${cat.ordem}</td>
+        <td class="px-4 py-3 text-center">
+          <button
+            onclick="excluirCategoriaEntrada(${cat.id})"
+            class="text-red-500 hover:text-red-700 transition"
+            title="Excluir categoria de entrada"
+          >
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </td>
+      </tr>
+    `)
+    .join('');
+}
+
+function salvarCategoriaEntrada() {
+  const input = document.getElementById('novaCategoriaEntrada');
+  const msg = document.getElementById('categoriaEntradaMsg');
+  const nome = input.value.trim();
+
+  if (!nome) {
+    msg.textContent = 'Digite o nome da categoria de entrada';
+    msg.className = 'text-sm mt-2 font-semibold text-red-600';
+    input.focus();
+    return;
+  }
+
+  fetch('http://localhost:3000/categorias/entradas', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nome })
+  })
+    .then(res => {
+      if (!res.ok) throw new Error('Erro ao salvar categoria de entrada');
+      return res.json();
+    })
+    .then(() => {
+      msg.textContent = 'Categoria de entrada salva com sucesso!';
+      msg.className = 'text-sm mt-2 font-semibold text-green-600';
+      input.value = '';
+      carregarCategoriasEntrada();
+    })
+    .catch(err => {
+      console.error(err);
+      msg.textContent = 'Erro ao salvar categoria de entrada';
+      msg.className = 'text-sm mt-2 font-semibold text-red-600';
+    });
+}
+
+function excluirCategoriaEntrada(id) {
+  if (!confirm('Tem certeza que deseja excluir esta categoria de entrada?')) {
+    return;
+  }
+
+  fetch(`http://localhost:3000/categorias/entradas/${id}`, {
+    method: 'DELETE'
+  })
+    .then(res => {
+      if (!res.ok) throw new Error('Erro ao excluir categoria de entrada');
+      return res.json();
+    })
+    .then(() => {
+      carregarCategoriasEntrada();
+    })
+    .catch(err => {
+      console.error(err);
+      alert('Erro ao excluir categoria de entrada');
+    });
+}
+
+// ================= TIPOS DE PAGAMENTO =================
+
+function carregarTiposPagamento() {
+  const tabela = document.getElementById('tabelaTiposPagamento');
+  if (!tabela) return;
+
+  fetch('http://localhost:3000/tipos-pagamento')
+    .then(res => {
+      if (!res.ok) throw new Error('Erro ao carregar tipos de pagamento');
+      return res.json();
+    })
+    .then(json => {
+      const tipos = json.data || [];
+      renderizarTabelaTiposPagamento(tipos);
+    })
+    .catch(err => {
+      console.error(err);
+      tabela.innerHTML = `
+        <tr>
+          <td colspan="4" class="px-4 py-8 text-center text-red-500">
+            <i class="fas fa-exclamation-circle text-2xl"></i>
+            <p class="mt-2">Erro ao carregar tipos de pagamento. Tente novamente.</p>
+          </td>
+        </tr>
+      `;
+    });
+}
+
+function renderizarTabelaTiposPagamento(tipos) {
+  const tabela = document.getElementById('tabelaTiposPagamento');
+
+  if (!tabela) return;
+
+  if (tipos.length === 0) {
+    tabela.innerHTML = `
+      <tr>
+        <td colspan="4" class="px-4 py-8 text-center text-gray-500">
+          <i class="fas fa-credit-card text-4xl mb-2"></i>
+          <p>Nenhum tipo de pagamento cadastrado</p>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tabela.innerHTML = tipos
+    .map(tipo => `
+      <tr class="hover:bg-gray-50 transition">
+        <td class="px-4 py-3 text-sm text-gray-600">${tipo.id}</td>
+        <td class="px-4 py-3 text-sm font-medium text-gray-900">${escapeHtml(tipo.nome)}</td>
+        <td class="px-4 py-3 text-sm text-gray-600">${tipo.ordem}</td>
+        <td class="px-4 py-3 text-center">
+          <button
+            onclick="excluirTipoPagamento(${tipo.id})"
+            class="text-red-500 hover:text-red-700 transition"
+            title="Excluir tipo de pagamento"
+          >
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </td>
+      </tr>
+    `)
+    .join('');
+}
+
+function salvarTipoPagamento() {
+  const input = document.getElementById('novoTipoPagamento');
+  const msg = document.getElementById('tipoPagamentoMsg');
+  const nome = input.value.trim();
+
+  if (!nome) {
+    msg.textContent = 'Digite o nome do tipo de pagamento';
+    msg.className = 'text-sm mt-2 font-semibold text-red-600';
+    input.focus();
+    return;
+  }
+
+  fetch('http://localhost:3000/tipos-pagamento', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nome })
+  })
+    .then(res => {
+      if (!res.ok) throw new Error('Erro ao salvar tipo de pagamento');
+      return res.json();
+    })
+    .then(() => {
+      msg.textContent = 'Tipo de pagamento salvo com sucesso!';
+      msg.className = 'text-sm mt-2 font-semibold text-green-600';
+      input.value = '';
+      carregarTiposPagamento();
+    })
+    .catch(err => {
+      console.error(err);
+      msg.textContent = 'Erro ao salvar tipo de pagamento';
+      msg.className = 'text-sm mt-2 font-semibold text-red-600';
+    });
+}
+
+function excluirTipoPagamento(id) {
+  if (!confirm('Tem certeza que deseja excluir este tipo de pagamento?')) {
+    return;
+  }
+
+  fetch(`http://localhost:3000/tipos-pagamento/${id}`, {
+    method: 'DELETE'
+  })
+    .then(res => {
+      if (!res.ok) throw new Error('Erro ao excluir tipo de pagamento');
+      return res.json();
+    })
+    .then(() => {
+      carregarTiposPagamento();
+    })
+    .catch(err => {
+      console.error(err);
+      alert('Erro ao excluir tipo de pagamento');
+    });
+}
+
+// ================= LOJAS =================
+
+function carregarLojas() {
+  const tabela = document.getElementById('tabelaLojas');
+  if (!tabela) return;
+
+  fetch('http://localhost:3000/lojas')
+    .then(res => {
+      if (!res.ok) throw new Error('Erro ao carregar lojas');
+      return res.json();
+    })
+    .then(json => {
+      const lojas = json.data || [];
+      renderizarTabelaLojas(lojas);
+    })
+    .catch(err => {
+      console.error(err);
+      tabela.innerHTML = `
+        <tr>
+          <td colspan="4" class="px-4 py-8 text-center text-red-500">
+            <i class="fas fa-exclamation-circle text-2xl"></i>
+            <p class="mt-2">Erro ao carregar lojas. Tente novamente.</p>
+          </td>
+        </tr>
+      `;
+    });
+}
+
+function renderizarTabelaLojas(lojas) {
+  const tabela = document.getElementById('tabelaLojas');
+
+  if (!tabela) return;
+
+  if (lojas.length === 0) {
+    tabela.innerHTML = `
+      <tr>
+        <td colspan="4" class="px-4 py-8 text-center text-gray-500">
+          <i class="fas fa-store text-4xl mb-2"></i>
+          <p>Nenhuma loja cadastrada</p>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tabela.innerHTML = lojas
+    .map(loja => `
+      <tr class="hover:bg-gray-50 transition">
+        <td class="px-4 py-3 text-sm text-gray-600">${loja.id}</td>
+        <td class="px-4 py-3 text-sm font-medium text-gray-900">${escapeHtml(loja.nome)}</td>
+        <td class="px-4 py-3 text-sm text-gray-600">${loja.ordem}</td>
+        <td class="px-4 py-3 text-center">
+          <button
+            onclick="excluirLoja(${loja.id})"
+            class="text-red-500 hover:text-red-700 transition"
+            title="Excluir loja"
+          >
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </td>
+      </tr>
+    `)
+    .join('');
+}
+
+function salvarLoja() {
+  const input = document.getElementById('novaLoja');
+  const msg = document.getElementById('lojaMsg');
+  const nome = input.value.trim();
+
+  if (!nome) {
+    msg.textContent = 'Digite o nome da loja';
+    msg.className = 'text-sm mt-2 font-semibold text-red-600';
+    input.focus();
+    return;
+  }
+
+  fetch('http://localhost:3000/lojas', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nome })
+  })
+    .then(res => {
+      if (!res.ok) {
+        return res.json().then(err => {
+          throw new Error(err.message || 'Erro ao salvar loja');
+        });
+      }
+      return res.json();
+    })
+    .then(() => {
+      msg.textContent = 'Loja salva com sucesso!';
+      msg.className = 'text-sm mt-2 font-semibold text-green-600';
+      input.value = '';
+      carregarLojas();
+    })
+    .catch(err => {
+      console.error(err);
+      msg.textContent = err.message || 'Erro ao salvar loja';
+      msg.className = 'text-sm mt-2 font-semibold text-red-600';
+    });
+}
+
+function excluirLoja(id) {
+  if (!confirm('Tem certeza que deseja excluir esta loja?')) {
+    return;
+  }
+
+  fetch(`http://localhost:3000/lojas/${id}`, {
+    method: 'DELETE'
+  })
+    .then(res => {
+      if (!res.ok) throw new Error('Erro ao excluir loja');
+      return res.json();
+    })
+    .then(() => {
+      carregarLojas();
+    })
+    .catch(err => {
+      console.error(err);
+      alert('Erro ao excluir loja');
+    });
+}

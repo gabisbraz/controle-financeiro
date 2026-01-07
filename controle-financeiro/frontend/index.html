@@ -30,8 +30,10 @@
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Loja</label>
-                <input type="text" id="editSaidaLoja"
-                    class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
+                <select id="editSaidaLoja"
+                    class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <!-- opções serão inseridas via JS -->
+                </select>
             </div>
 
             <div>
@@ -297,9 +299,11 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Loja</label>
-                            <input type="text" id="saidaLoja" required
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                                placeholder="Nome da loja" />
+                            <select id="saidaLoja" required
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                                <option value="">Selecione...</option>
+                                <!-- opções serão inseridas via JS -->
+                            </select>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
@@ -500,6 +504,51 @@
         <div class="flex items-center gap-2">
             <i id="toastIcon" class="fas fa-check-circle"></i>
             <span id="toastMessage">Operação realizada com sucesso!</span>
+        </div>
+    </div>
+
+    <!-- Modal Nova Loja -->
+    <div id="modalNovaLoja" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl w-full max-w-md shadow-2xl">
+            <div class="bg-emerald-600 text-white px-6 py-4 rounded-t-xl flex justify-between items-center">
+                <h3 class="text-lg font-semibold flex items-center gap-2">
+                    <i class="fas fa-plus-circle"></i>
+                    Nova Loja
+                </h3>
+                <button onclick="fecharModalNovaLoja()" class="text-white hover:text-gray-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="p-6">
+                <p class="text-gray-600 mb-4">
+                    Cadastre uma nova loja para usar nas suas saídas.
+                </p>
+
+                <form id="formNovaLoja" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nome da Loja</label>
+                        <input type="text" id="inputNovaLoja" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                            placeholder="Ex: Mercado, Farmácia, Restaurante..." />
+                    </div>
+
+                    <div id="msgNovaLoja" class="text-sm font-semibold hidden"></div>
+
+                    <div class="flex justify-end gap-3 pt-4">
+                        <button type="button" onclick="fecharModalNovaLoja()"
+                            class="px-6 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 text-gray-700">
+                            Cancelar
+                        </button>
+
+                        <button type="submit"
+                            class="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center gap-2">
+                            <i class="fas fa-save"></i>
+                            Salvar
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 

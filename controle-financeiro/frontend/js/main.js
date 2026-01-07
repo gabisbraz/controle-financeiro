@@ -28,19 +28,17 @@ const modalDelete = document.getElementById("modalDelete");
 const toast = document.getElementById("toast");
 
 // Remover import/export para uso em ambiente browser
-// Categorias de entrada são fixas
-const categoriasEntrada = [
-  "Salário",
-  "13º Salário",
-  "Bônus",
-  "Pagamento",
-  "Freelance",
-  "Investimentos",
-  "Outros",
-];
+// Categorias de entrada serão carregadas da API
+let categoriasEntrada = [];
 
 // Categorias de saída serão carregadas da API
 let categoriasSaida = [];
+
+// Tipos de pagamento serão carregados da API
+let tiposPagamento = [];
+
+// Lojas serão carregadas da API
+let lojas = [];
 
 // Initialize
 document.addEventListener("DOMContentLoaded", () => {
@@ -690,6 +688,82 @@ function preencherCategorias() {
     });
 }
 
+function carregarTiposPagamentoAPI() {
+  // Carregar tipos de pagamento da API
+  fetch('http://localhost:3000/tipos-pagamento')
+    .then(res => {
+      if (!res.ok) throw new Error('Erro ao carregar tipos de pagamento');
+      return res.json();
+    })
+    .then(json => {
+      tiposPagamento = (json.data || []).map(tipo => tipo.nome);
+      atualizarSelectTipoPagamento();
+    })
+    .catch(err => {
+      console.error('Erro ao carregar tipos de pagamento:', err);
+      // Usar tipos padrão em caso de erro
+      tiposPagamento = ['Débito', 'Crédito', 'Pix', 'Dinheiro', 'Transferência'];
+      atualizarSelectTipoPagamento();
+    });
+}
+
+function carregarLojasAPI() {
+  // Carregar lojas da API
+  fetch('http://localhost:3000/lojas')
+    .then(res => {
+      if (!res.ok) throw new Error('Erro ao carregar lojas');
+      return res.json();
+    })
+    .then(json => {
+      lojas = (json.data || []).map(loja => ({ id: loja.id, nome: loja.nome }));
+      atualizarSelectLoja();
+    })
+    .catch(err => {
+      console.error('Erro ao carregar lojas:', err);
+      // Manter array vazio em caso de erro
+      lojas = [];
+      atualizarSelectLoja();
+    });
+}
+
+function carregarCategoriasEntradaAPI() {
+  // Carregar categorias de entrada da API
+  fetch('http://localhost:3000/categorias/entradas')
+    .then(res => {
+      if (!res.ok) throw new Error('Erro ao carregar categorias de entrada');
+      return res.json();
+    })
+    .then(json => {
+      categoriasEntrada = (json.data || []).map(cat => cat.nome);
+      atualizarSelectsCategorias();
+    })
+    .catch(err => {
+      console.error('Erro ao carregar categorias de entrada:', err);
+      // Usar categorias padrão em caso de erro
+      categoriasEntrada = [
+        "Salário",
+        "13º Salário",
+        "Bônus",
+        "Pagamento",
+        "Freelance",
+        "Investimentos",
+        "Outros"
+      ];
+      atualizarSelectsCategorias();
+    });
+}
+
+function atualizarSelectTipoPagamento() {
+  const saidaTipoPagamento = document.getElementById("saidaTipoPagamento");
+  if (saidaTipoPagamento) {
+    saidaTipoPagamento.innerHTML =
+      '<option value="">Selecione...</option>' +
+      tiposPagamento
+        .map((tipo) => `<option value="${tipo}">${tipo}</option>`)
+        .join("");
+  }
+}
+
 function atualizarSelectsCategorias() {
   // Saída principal
   const saidaCategoria = document.getElementById("saidaCategoria");
@@ -716,8 +790,124 @@ function atualizarSelectsCategorias() {
   }
 }
 
+function atualizarSelectLoja() {
+  const saidaLoja = document.getElementById("saidaLoja");
+  const editSaidaLoja = document.getElementById("editSaidaLoja");
+  
+  // Atualizar select principal
+  if (saidaLoja) {
+    const currentValue = saidaLoja.value;
+    saidaLoja.innerHTML =
+      '<option value="">Selecione...</option>' +
+      '<option value="__nova__">+ Cadastrar nova loja...</option>' +
+      lojas
+        .map((loja) => `<option value="${loja.nome}">${loja.nome}</option>`)
+        .join("");
+    // Manter o valor selecionado se ainda existir
+    if (currentValue && lojas.some(l => l.nome === currentValue)) {
+      saidaLoja.value = currentValue;
+    }
+  }
+  
+  // Atualizar select do modal de edição
+  if (editSaidaLoja) {
+    const currentEditValue = editSaidaLoja.value;
+    editSaidaLoja.innerHTML =
+      '<option value="">Selecione...</option>' +
+      lojas
+        .map((loja) => `<option value="${loja.nome}">${loja.nome}</option>`)
+        .join("");
+    // Manter o valor selecionado se ainda existir
+    if (currentEditValue && lojas.some(l => l.nome === currentEditValue)) {
+      editSaidaLoja.value = currentEditValue;
+    }
+  }
+}
+
+// Modal Nova Loja functions
+function abrirModalNovaLoja() {
+  const modal = document.getElementById("modalNovaLoja");
+  modal.classList.remove("hidden");
+  modal.classList.add("flex");
+  document.getElementById("inputNovaLoja").value = "";
+  document.getElementById("inputNovaLoja").focus();
+  const msg = document.getElementById("msgNovaLoja");
+  msg.className = "text-sm font-semibold hidden";
+  msg.textContent = "";
+}
+
+function fecharModalNovaLoja() {
+  const modal = document.getElementById("modalNovaLoja");
+  modal.classList.add("hidden");
+  modal.classList.remove("flex");
+}
+
+function salvarNovaLoja() {
+  const nome = document.getElementById("inputNovaLoja").value.trim();
+  const msg = document.getElementById("msgNovaLoja");
+
+  if (!nome) {
+    msg.textContent = "Digite o nome da loja";
+    msg.className = "text-sm font-semibold text-red-600";
+    return;
+  }
+
+  fetch("http://localhost:3000/lojas", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nome }),
+  })
+    .then((res) => {
+      if (!res.ok) {
+        return res.json().then((err) => {
+          throw new Error(err.message || "Erro ao salvar loja");
+        });
+      }
+      return res.json();
+    })
+    .then((json) => {
+      showToast("Loja criada com sucesso!");
+      fecharModalNovaLoja();
+      // Recarregar lojas e atualizar select
+      carregarLojasAPI();
+    })
+    .catch((err) => {
+      console.error(err);
+      msg.textContent = err.message || "Erro ao salvar loja";
+      msg.className = "text-sm font-semibold text-red-600";
+    });
+}
+
+// Handle change no select de loja para abrir modal de nova loja
+function handleLojaChange() {
+  const saidaLoja = document.getElementById("saidaLoja");
+  if (saidaLoja && saidaLoja.value === "__nova__") {
+    abrirModalNovaLoja();
+    // Resetar para primeira opção
+    saidaLoja.value = "";
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   preencherCategorias();
+  carregarCategoriasEntradaAPI();
+  carregarTiposPagamentoAPI();
+  carregarLojasAPI();
+  
+  // Event listener para o select de loja
+  const saidaLoja = document.getElementById("saidaLoja");
+  if (saidaLoja) {
+    saidaLoja.addEventListener("change", handleLojaChange);
+  }
+  
+  // Event listener para o formulário de nova loja
+  const formNovaLoja = document.getElementById("formNovaLoja");
+  if (formNovaLoja) {
+    formNovaLoja.addEventListener("submit", (e) => {
+      e.preventDefault();
+      salvarNovaLoja();
+    });
+  }
   
   // Adicionar event listeners para cálculo automático de parcelas
   const saidaValor = document.getElementById("saidaValor");
