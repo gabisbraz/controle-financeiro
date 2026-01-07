@@ -165,6 +165,120 @@ function confirmarDeleteDb() {
     });
 }
 
+// ================= MODAL DE EDIÇÃO GENÉRICO =================
+
+function abrirModalEditar(id, nome, tipo) {
+  const modal = document.getElementById('modalEditar');
+  const inputId = document.getElementById('editarId');
+  const inputTipo = document.getElementById('editarTipo');
+  const inputNome = document.getElementById('editarNome');
+  const titulo = document.getElementById('modalEditarTitulo');
+  const msg = document.getElementById('editarMsg');
+
+  // Definir título baseado no tipo
+  const titulos = {
+    'categoria': 'Editar Categoria de Saída',
+    'categoria-entrada': 'Editar Categoria de Entrada',
+    'tipo-pagamento': 'Editar Tipo de Pagamento',
+    'loja': 'Editar Loja'
+  };
+
+  inputId.value = id;
+  inputTipo.value = tipo;
+  inputNome.value = nome;
+  titulo.textContent = titulos[tipo] || 'Editar Item';
+  msg.textContent = '';
+  msg.className = 'text-sm mb-4 font-semibold';
+
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+  inputNome.focus();
+}
+
+function fecharModalEditar() {
+  const modal = document.getElementById('modalEditar');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
+function salvarEdicao() {
+  const id = document.getElementById('editarId').value;
+  const tipo = document.getElementById('editarTipo').value;
+  const nome = document.getElementById('editarNome').value.trim();
+  const msg = document.getElementById('editarMsg');
+
+  if (!nome) {
+    msg.textContent = 'Digite o nome do item';
+    msg.className = 'text-sm mb-4 font-semibold text-red-600';
+    return;
+  }
+
+  // Mapear tipos para endpoints
+  const endpoints = {
+    'categoria': 'categorias/saidas',
+    'categoria-entrada': 'categorias/entradas',
+    'tipo-pagamento': 'tipos-pagamento',
+    'loja': 'lojas'
+  };
+
+  const endpoint = endpoints[tipo];
+
+  fetch(`http://localhost:3000/${endpoint}/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nome })
+  })
+    .then(res => {
+      if (!res.ok) throw new Error('Erro ao salvar edição');
+      return res.json();
+    })
+    .then(() => {
+      fecharModalEditar();
+      
+      // Recarregar a tabela apropriada
+      switch (tipo) {
+        case 'categoria':
+          carregarCategorias();
+          break;
+        case 'categoria-entrada':
+          carregarCategoriasEntrada();
+          break;
+        case 'tipo-pagamento':
+          carregarTiposPagamento();
+          break;
+        case 'loja':
+          carregarLojas();
+          break;
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      msg.textContent = 'Erro ao salvar edição';
+      msg.className = 'text-sm mb-4 font-semibold text-red-600';
+    });
+}
+
+// Fechar modal ao clicar fora
+document.addEventListener('click', (e) => {
+  const modal = document.getElementById('modalEditar');
+  if (e.target === modal) {
+    fecharModalEditar();
+  }
+});
+
+// Permitir salvar com Enter no input de edição
+document.addEventListener('DOMContentLoaded', () => {
+  const inputEditar = document.getElementById('editarNome');
+  if (inputEditar) {
+    inputEditar.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        salvarEdicao();
+      }
+    });
+  }
+});
+
 function openTab(tabId) {
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.add('hidden');
@@ -406,6 +520,13 @@ function renderizarTabelaCategorias(categorias) {
         <td class="px-4 py-3 text-sm text-gray-600">${cat.ordem}</td>
         <td class="px-4 py-3 text-center">
           <button
+            onclick="abrirModalEditar(${cat.id}, '${escapeHtml(cat.nome)}', 'categoria')"
+            class="text-blue-500 hover:text-blue-700 transition mr-2"
+            title="Editar categoria"
+          >
+            <i class="fas fa-edit"></i>
+          </button>
+          <button
             onclick="excluirCategoria(${cat.id})"
             class="text-red-500 hover:text-red-700 transition"
             title="Excluir categoria"
@@ -588,6 +709,13 @@ function renderizarTabelaCategoriasEntrada(categorias) {
         <td class="px-4 py-3 text-sm text-gray-600">${cat.ordem}</td>
         <td class="px-4 py-3 text-center">
           <button
+            onclick="abrirModalEditar(${cat.id}, '${escapeHtml(cat.nome)}', 'categoria-entrada')"
+            class="text-blue-500 hover:text-blue-700 transition mr-2"
+            title="Editar categoria de entrada"
+          >
+            <i class="fas fa-edit"></i>
+          </button>
+          <button
             onclick="excluirCategoriaEntrada(${cat.id})"
             class="text-red-500 hover:text-red-700 transition"
             title="Excluir categoria de entrada"
@@ -708,6 +836,13 @@ function renderizarTabelaTiposPagamento(tipos) {
         <td class="px-4 py-3 text-sm text-gray-600">${tipo.ordem}</td>
         <td class="px-4 py-3 text-center">
           <button
+            onclick="abrirModalEditar(${tipo.id}, '${escapeHtml(tipo.nome)}', 'tipo-pagamento')"
+            class="text-blue-500 hover:text-blue-700 transition mr-2"
+            title="Editar tipo de pagamento"
+          >
+            <i class="fas fa-edit"></i>
+          </button>
+          <button
             onclick="excluirTipoPagamento(${tipo.id})"
             class="text-red-500 hover:text-red-700 transition"
             title="Excluir tipo de pagamento"
@@ -827,6 +962,13 @@ function renderizarTabelaLojas(lojas) {
         <td class="px-4 py-3 text-sm font-medium text-gray-900">${escapeHtml(loja.nome)}</td>
         <td class="px-4 py-3 text-sm text-gray-600">${loja.ordem}</td>
         <td class="px-4 py-3 text-center">
+          <button
+            onclick="abrirModalEditar(${loja.id}, '${escapeHtml(loja.nome)}', 'loja')"
+            class="text-blue-500 hover:text-blue-700 transition mr-2"
+            title="Editar loja"
+          >
+            <i class="fas fa-edit"></i>
+          </button>
           <button
             onclick="excluirLoja(${loja.id})"
             class="text-red-500 hover:text-red-700 transition"
