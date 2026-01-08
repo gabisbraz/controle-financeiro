@@ -85,13 +85,23 @@ function filtrarPorDataRecente(items) {
   const limite = new Date();
   limite.setDate(hoje.getDate() - 15);
 
-  const hojeISO = hoje.toISOString();
-  const limiteISO = limite.toISOString();
+  // Extract YYYY-MM-DD from dates for comparison (avoids timezone issues)
+  const hojeStr = hoje.toISOString().split('T')[0];
+  const limiteStr = limite.toISOString().split('T')[0];
+
+  console.log('filtrarPorDataRecente - Date range:', limiteStr, 'to', hojeStr);
 
   return items.filter((item) => {
     const dataInput = item.data_input || item.created_at || item.data_insercao;
     if (!dataInput) return true; // Se não tiver data_input, incluir por segurança
-    return dataInput >= limiteISO && dataInput <= hojeISO;
+    
+    // Extract just the date portion from the ISO timestamp
+    const dataInputStr = dataInput.split('T')[0];
+    const isIncluded = dataInputStr >= limiteStr && dataInputStr <= hojeStr;
+    
+    console.log('filtrarPorDataRecente - Item data_input:', dataInput, '->', dataInputStr, 'Included:', isIncluded);
+    
+    return isIncluded;
   });
 }
 
@@ -216,7 +226,9 @@ async function loadSaidas() {
   try {
     const response = await fetch(`${API_BASE}/saidas?limit=1000&sort=-data`);
     const result = await response.json();
+    console.log('loadSaidas - API Response:', result);
     saidas = result.data || [];
+    console.log('loadSaidas - Total saidas loaded:', saidas.length);
     renderSaidas();
     updateSummary();
   } catch (error) {
@@ -294,7 +306,9 @@ function renderEntradas() {
 // Render Saídas table
 function renderSaidas() {
   // Filter by data_input (last 15 days)
+  console.log('renderSaidas - Total saidas before filter:', saidas.length);
   const saidasRecentes = filtrarPorDataRecente(saidas);
+  console.log('renderSaidas - Saidas after filter:', saidasRecentes.length);
 
   if (saidasRecentes.length === 0) {
     tabelaSaidas.innerHTML = `
@@ -326,11 +340,11 @@ function renderSaidas() {
                 </span>
             </td>
             <td class="px-4 py-3">
-                <span class="badge badge-${saida.tipo_pagamento
+                <span class="badge badge-${(saida.tipo_pagamento || '')
                   .toLowerCase()
                   .normalize("NFD")
                   .replace(/[\u0300-\u036f]/g, "")}">
-                    ${saida.tipo_pagamento}
+                    ${saida.tipo_pagamento || '-'}
                 </span>
             </td>
             <td class="px-4 py-3 text-sm text-gray-600">
@@ -569,19 +583,185 @@ function fecharModalEditarEntrada() {
 }
 
 function editSaida(saida) {
-  document.getElementById("editSaidaId").value = saida.id;
-  document.getElementById("editSaidaLoja").value = saida.loja;
-  document.getElementById("editSaidaCategoria").value = saida.categoria;
-  document.getElementById("editSaidaDescricao").value = saida.descricao;
-  document.getElementById("editSaidaValor").value = saida.valor;
-  document.getElementById("editSaidaPagamento").value = saida.tipo_pagamento;
-  document.getElementById("editSaidaData").value = saida.data;
-  document.getElementById("editSaidaParcelas").value = saida.parcelas || 1;
-  document.getElementById("editSaidaParcelaAtual").value = saida.parcela_atual || 1;
+  // Armazenar valores temporariamente como atributos data
+  const editSaidaLoja = document.getElementById("editSaidaLoja");
+  const editSaidaPagamento = document.getElementById("editSaidaPagamento");
+  
+  // Só definir os valores após os selects estarem populados
+  // Primeiro, populamos os selects e depois definimos os valores
+  Promise.all([
+    carregarCategoriasSaidaModal(),
+    carregarTiposPagamentoModal(),
+    carregarLojasModal()
+  ]).then(() => {
+    // Agora os selects estão populados, podemos definir os valores
+    document.getElementById("editSaidaId").value = saida.id;
+    document.getElementById("editSaidaLoja").value = saida.loja || "";
+    document.getElementById("editSaidaCategoria").value = saida.categoria || "";
+    document.getElementById("editSaidaDescricao").value = saida.descricao || "";
+    document.getElementById("editSaidaValor").value = saida.valor;
+    document.getElementById("editSaidaPagamento").value = saida.tipo_pagamento || "";
+    document.getElementById("editSaidaData").value = saida.data;
+    document.getElementById("editSaidaParcelas").value = saida.parcelas || 1;
+    document.getElementById("editSaidaParcelaAtual").value = saida.parcela_atual || 1;
 
-  const modal = document.getElementById("modalEditarSaida");
-  modal.classList.remove("hidden");
-  modal.classList.add("flex");
+    const modal = document.getElementById("modalEditarSaida");
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+  }).catch(err => {
+    console.error("Erro ao carregar dados do modal:", err);
+    // Mesmo com erro, abre o modal
+    document.getElementById("editSaidaId").value = saida.id;
+    document.getElementById("editSaidaLoja").value = saida.loja || "";
+    document.getElementById("editSaidaCategoria").value = saida.categoria || "";
+    document.getElementById("editSaidaDescricao").value = saida.descricao || "";
+    document.getElementById("editSaidaValor").value = saida.valor;
+    document.getElementById("editSaidaPagamento").value = saida.tipo_pagamento || "";
+    document.getElementById("editSaidaData").value = saida.data;
+    document.getElementById("editSaidaParcelas").value = saida.parcelas || 1;
+    document.getElementById("editSaidaParcelaAtual").value = saida.parcela_atual || 1;
+
+    const modal = document.getElementById("modalEditarSaida");
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+  });
+}
+
+// Funções para carregar dados do modal de forma assíncrona
+function carregarCategoriasSaidaModal() {
+  return new Promise((resolve, reject) => {
+    const select = document.getElementById("editSaidaCategoria");
+    if (!select) {
+      resolve();
+      return;
+    }
+    
+    // Se já tem opções, resolver imediatamente
+    if (categoriasSaida.length > 0) {
+      select.innerHTML = categoriasSaida
+        .map((cat) => `<option value="${cat}">${cat}</option>`)
+        .join("");
+      resolve();
+      return;
+    }
+    
+    // Caso contrário, carregar da API
+    fetch('http://localhost:3000/categorias/saidas')
+      .then(res => {
+        if (!res.ok) throw new Error('Erro ao carregar categorias');
+        return res.json();
+      })
+      .then(json => {
+        categoriasSaida = (json.data || []).map(cat => cat.nome);
+        select.innerHTML = categoriasSaida
+          .map((cat) => `<option value="${cat}">${cat}</option>`)
+          .join("");
+        resolve();
+      })
+      .catch(err => {
+        console.error('Erro ao carregar categorias de saída:', err);
+        // Usar categorias padrão em caso de erro
+        categoriasSaida = [
+          "Transporte", "Alimentação", "Autocuidado", "Moradia", "Saúde",
+          "Educação", "Lazer", "Vestuário", "MG", "Outros"
+        ];
+        select.innerHTML = categoriasSaida
+          .map((cat) => `<option value="${cat}">${cat}</option>`)
+          .join("");
+        resolve();
+      });
+  });
+}
+
+function carregarTiposPagamentoModal() {
+  return new Promise((resolve, reject) => {
+    const select = document.getElementById("editSaidaPagamento");
+    if (!select) {
+      resolve();
+      return;
+    }
+    
+    // Se já tem opções, resolver imediatamente
+    if (tiposPagamento.length > 0) {
+      select.innerHTML =
+        '<option value="">Selecione...</option>' +
+        tiposPagamento
+          .map((tipo) => `<option value="${tipo}">${tipo}</option>`)
+          .join("");
+      resolve();
+      return;
+    }
+    
+    // Caso contrário, carregar da API
+    fetch('http://localhost:3000/tipos-pagamento')
+      .then(res => {
+        if (!res.ok) throw new Error('Erro ao carregar tipos de pagamento');
+        return res.json();
+      })
+      .then(json => {
+        tiposPagamento = (json.data || []).map(tipo => tipo.nome);
+        select.innerHTML =
+          '<option value="">Selecione...</option>' +
+          tiposPagamento
+            .map((tipo) => `<option value="${tipo}">${tipo}</option>`)
+            .join("");
+        resolve();
+      })
+      .catch(err => {
+        console.error('Erro ao carregar tipos de pagamento:', err);
+        // Usar tipos padrão em caso de erro
+        tiposPagamento = ['Débito', 'Crédito', 'Pix', 'Dinheiro', 'Transferência'];
+        select.innerHTML =
+          '<option value="">Selecione...</option>' +
+          tiposPagamento
+            .map((tipo) => `<option value="${tipo}">${tipo}</option>`)
+            .join("");
+        resolve();
+      });
+  });
+}
+
+function carregarLojasModal() {
+  return new Promise((resolve, reject) => {
+    const select = document.getElementById("editSaidaLoja");
+    if (!select) {
+      resolve();
+      return;
+    }
+    
+    // Se já tem opções, resolver imediatamente
+    if (lojas.length > 0) {
+      select.innerHTML =
+        '<option value="">Selecione...</option>' +
+        lojas
+          .map((loja) => `<option value="${loja.nome}">${loja.nome}</option>`)
+          .join("");
+      resolve();
+      return;
+    }
+    
+    // Caso contrário, carregar da API
+    fetch('http://localhost:3000/lojas')
+      .then(res => {
+        if (!res.ok) throw new Error('Erro ao carregar lojas');
+        return res.json();
+      })
+      .then(json => {
+        lojas = (json.data || []).map(loja => ({ id: loja.id, nome: loja.nome }));
+        select.innerHTML =
+          '<option value="">Selecione...</option>' +
+          lojas
+            .map((loja) => `<option value="${loja.nome}">${loja.nome}</option>`)
+            .join("");
+        resolve();
+      })
+      .catch(err => {
+        console.error('Erro ao carregar lojas:', err);
+        // Manter array vazio em caso de erro
+        lojas = [];
+        resolve();
+      });
+  });
 }
 
 function fecharModalEditarSaida() {
@@ -708,22 +888,26 @@ function carregarTiposPagamentoAPI() {
 }
 
 function carregarLojasAPI() {
-  // Carregar lojas da API
-  fetch('http://localhost:3000/lojas')
-    .then(res => {
-      if (!res.ok) throw new Error('Erro ao carregar lojas');
-      return res.json();
-    })
-    .then(json => {
-      lojas = (json.data || []).map(loja => ({ id: loja.id, nome: loja.nome }));
-      atualizarSelectLoja();
-    })
-    .catch(err => {
-      console.error('Erro ao carregar lojas:', err);
-      // Manter array vazio em caso de erro
-      lojas = [];
-      atualizarSelectLoja();
-    });
+  return new Promise((resolve, reject) => {
+    // Carregar lojas da API
+    fetch('http://localhost:3000/lojas')
+      .then(res => {
+        if (!res.ok) throw new Error('Erro ao carregar lojas');
+        return res.json();
+      })
+      .then(json => {
+        lojas = (json.data || []).map(loja => ({ id: loja.id, nome: loja.nome }));
+        atualizarSelectLoja();
+        resolve();
+      })
+      .catch(err => {
+        console.error('Erro ao carregar lojas:', err);
+        // Manter array vazio em caso de erro
+        lojas = [];
+        atualizarSelectLoja();
+        resolve(); // Resolvemos mesmo com erro para não quebrar o fluxo
+      });
+  });
 }
 
 function carregarCategoriasEntradaAPI() {
@@ -823,15 +1007,20 @@ function atualizarSelectLoja() {
   
   // Atualizar select do modal de edição
   if (editSaidaLoja) {
-    const currentEditValue = editSaidaLoja.value;
+    const currentEditValue = editSaidaLoja.getAttribute('data-valor-selecionado') || editSaidaLoja.value;
     editSaidaLoja.innerHTML =
       '<option value="">Selecione...</option>' +
       lojas
         .map((loja) => `<option value="${loja.nome}">${loja.nome}</option>`)
         .join("");
-    // Manter o valor selecionado se ainda existir
-    if (currentEditValue && lojas.some(l => l.nome === currentEditValue)) {
+    
+    // Tentar restaurar o valor selecionado
+    if (currentEditValue) {
       editSaidaLoja.value = currentEditValue;
+      // Se o valor existe, remover o atributo temporário
+      if (lojas.some(l => l.nome === currentEditValue)) {
+        editSaidaLoja.removeAttribute('data-valor-selecionado');
+      }
     }
   }
 }
@@ -900,6 +1089,84 @@ function handleLojaChange() {
   }
 }
 
+// Funções para o modal de nova loja no modal de edição
+function abrirModalNovaLojaEdit() {
+  const modal = document.getElementById("modalNovaLojaEdit");
+  if (modal) {
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+    document.getElementById("inputNovaLojaEdit").value = "";
+    document.getElementById("inputNovaLojaEdit").focus();
+    const msg = document.getElementById("msgNovaLojaEdit");
+    msg.className = "text-sm font-semibold hidden";
+    msg.textContent = "";
+  }
+}
+
+function fecharModalNovaLojaEdit() {
+  const modal = document.getElementById("modalNovaLojaEdit");
+  if (modal) {
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+  }
+}
+
+function salvarNovaLojaEdit() {
+  const nome = document.getElementById("inputNovaLojaEdit").value.trim();
+  const msg = document.getElementById("msgNovaLojaEdit");
+
+  if (!nome) {
+    msg.textContent = "Digite o nome da loja";
+    msg.className = "text-sm font-semibold text-red-600";
+    return;
+  }
+
+  fetch("http://localhost:3000/lojas", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nome }),
+  })
+    .then((res) => {
+      if (!res.ok) {
+        return res.json().then((err) => {
+          throw new Error(err.message || "Erro ao salvar loja");
+        });
+      }
+      return res.json();
+    })
+    .then((json) => {
+      showToast("Loja criada com sucesso!");
+      fecharModalNovaLojaEdit();
+      // Recarregar lojas e atualizar select
+      carregarLojasAPI().then(() => {
+        // Atualizar select do modal de edição
+        atualizarSelectLojaEdit();
+      });
+    })
+    .catch((err) => {
+      console.error(err);
+      msg.textContent = err.message || "Erro ao salvar loja";
+      msg.className = "text-sm font-semibold text-red-600";
+    });
+}
+
+function atualizarSelectLojaEdit() {
+  const editSaidaLoja = document.getElementById("editSaidaLoja");
+  if (editSaidaLoja) {
+    const currentValue = editSaidaLoja.value;
+    editSaidaLoja.innerHTML =
+      '<option value="">Selecione...</option>' +
+      lojas
+        .map((loja) => `<option value="${loja.nome}">${loja.nome}</option>`)
+        .join("");
+    
+    // Manter o valor selecionado se ainda existir
+    if (currentValue && lojas.some(l => l.nome === currentValue)) {
+      editSaidaLoja.value = currentValue;
+    }
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   preencherCategorias();
   carregarCategoriasEntradaAPI();
@@ -918,6 +1185,15 @@ document.addEventListener("DOMContentLoaded", () => {
     formNovaLoja.addEventListener("submit", (e) => {
       e.preventDefault();
       salvarNovaLoja();
+    });
+  }
+  
+  // Event listener para o formulário de nova loja no modal de edição
+  const formNovaLojaEdit = document.getElementById("formNovaLojaEdit");
+  if (formNovaLojaEdit) {
+    formNovaLojaEdit.addEventListener("submit", (e) => {
+      e.preventDefault();
+      salvarNovaLojaEdit();
     });
   }
   

@@ -3,6 +3,31 @@ const db = require('../db');
 const { v4: uuidv4 } = require('uuid');
 const router = express.Router();
 
+// Helper function to get ID by name from a table
+function getIdByName(table, name) {
+  return new Promise((resolve, reject) => {
+    if (!name) {
+      resolve(null);
+      return;
+    }
+    const query = `SELECT id FROM ${table} WHERE nome = ? LIMIT 1`;
+    db.get(query, [name], (err, row) => {
+      if (err) reject(err);
+      else resolve(row ? row.id : null);
+    });
+  });
+}
+
+// Helper function to get all data needed for insertion
+async function getIdsFromNames(data) {
+  const [loja_id, categoria_id, tipo_pagamento_id] = await Promise.all([
+    getIdByName('lojas', data.loja),
+    getIdByName('categorias_saidas', data.categoria),
+    getIdByName('tipos_pagamento', data.tipo_pagamento)
+  ]);
+  return { loja_id, categoria_id, tipo_pagamento_id };
+}
+
 // GET saidas
 router.get('/', (req, res) => {
   const query = `
@@ -35,11 +60,16 @@ router.get('/', (req, res) => {
 });
 
 // POST saida
-router.post('/', (req, res) => {
-  const { loja_id, categoria_id, descricao, tipo_pagamento_id, valor, data, parcelas, parcela_id } = req.body;
+router.post('/', async (req, res) => {
+  const { loja, categoria, descricao, tipo_pagamento, valor, data, parcelas, parcela_id } = req.body;
   const data_input = new Date().toISOString();
   
-  console.log('Recebido POST saidas:', { loja_id, categoria_id, descricao, tipo_pagamento_id, valor, data, parcelas, parcela_id });
+  console.log('Recebido POST saidas (com nomes):', { loja, categoria, descricao, tipo_pagamento, valor, data, parcelas, parcela_id });
+  
+  // Look up IDs from names
+  const { loja_id, categoria_id, tipo_pagamento_id } = await getIdsFromNames({ loja, categoria, tipo_pagamento });
+  
+  console.log('IDs resolvidos:', { loja_id, categoria_id, tipo_pagamento_id });
   
   // Se parcelas for maior que 1, criar registros para cada parcela
   if (parcelas && parseInt(parcelas) > 1) {
@@ -93,9 +123,12 @@ router.post('/', (req, res) => {
 });
 
 // PUT saida
-router.put('/:id', (req, res) => {
-  const { loja_id, categoria_id, descricao, tipo_pagamento_id, valor, data, parcelas, parcela_atual, parcela_id } = req.body;
+router.put('/:id', async (req, res) => {
+  const { loja, categoria, descricao, tipo_pagamento, valor, data, parcelas, parcela_atual, parcela_id } = req.body;
   const { id } = req.params;
+
+  // Look up IDs from names if provided
+  const { loja_id, categoria_id, tipo_pagamento_id } = await getIdsFromNames({ loja, categoria, tipo_pagamento });
 
   db.run(
     `UPDATE saidas SET loja_id=?, categoria_id=?, descricao=?, tipo_pagamento_id=?, valor=?, data=?, parcelas=?, parcela_atual=?, parcela_id=? WHERE id=?`,
