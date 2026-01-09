@@ -731,11 +731,7 @@ function carregarLojasModal() {
     
     // Se já tem opções, resolver imediatamente
     if (lojas.length > 0) {
-      select.innerHTML =
-        '<option value="">Selecione...</option>' +
-        lojas
-          .map((loja) => `<option value="${loja.nome}">${loja.nome}</option>`)
-          .join("");
+      atualizarSelectLojaEdit();
       resolve();
       return;
     }
@@ -748,17 +744,14 @@ function carregarLojasModal() {
       })
       .then(json => {
         lojas = (json.data || []).map(loja => ({ id: loja.id, nome: loja.nome }));
-        select.innerHTML =
-          '<option value="">Selecione...</option>' +
-          lojas
-            .map((loja) => `<option value="${loja.nome}">${loja.nome}</option>`)
-            .join("");
+        atualizarSelectLojaEdit();
         resolve();
       })
       .catch(err => {
         console.error('Erro ao carregar lojas:', err);
         // Manter array vazio em caso de erro
         lojas = [];
+        atualizarSelectLojaEdit();
         resolve();
       });
   });
@@ -1069,8 +1062,11 @@ function salvarNovaLoja() {
     .then((json) => {
       showToast("Loja criada com sucesso!");
       fecharModalNovaLoja();
-      // Recarregar lojas e atualizar select
-      carregarLojasAPI();
+      // Recarregar lojas e atualizar ambos os selects
+      carregarLojasAPI().then(() => {
+        atualizarSelectLoja();
+        atualizarSelectLojaEdit();
+      });
     })
     .catch((err) => {
       console.error(err);
@@ -1089,65 +1085,14 @@ function handleLojaChange() {
   }
 }
 
-// Funções para o modal de nova loja no modal de edição
-function abrirModalNovaLojaEdit() {
-  const modal = document.getElementById("modalNovaLojaEdit");
-  if (modal) {
-    modal.classList.remove("hidden");
-    modal.classList.add("flex");
-    document.getElementById("inputNovaLojaEdit").value = "";
-    document.getElementById("inputNovaLojaEdit").focus();
-    const msg = document.getElementById("msgNovaLojaEdit");
-    msg.className = "text-sm font-semibold hidden";
-    msg.textContent = "";
+// Handle change no select de loja do modal de edição
+function handleLojaEditChange() {
+  const editSaidaLoja = document.getElementById("editSaidaLoja");
+  if (editSaidaLoja && editSaidaLoja.value === "__nova__") {
+    abrirModalNovaLoja();
+    // Resetar para primeira opção
+    editSaidaLoja.value = "";
   }
-}
-
-function fecharModalNovaLojaEdit() {
-  const modal = document.getElementById("modalNovaLojaEdit");
-  if (modal) {
-    modal.classList.add("hidden");
-    modal.classList.remove("flex");
-  }
-}
-
-function salvarNovaLojaEdit() {
-  const nome = document.getElementById("inputNovaLojaEdit").value.trim();
-  const msg = document.getElementById("msgNovaLojaEdit");
-
-  if (!nome) {
-    msg.textContent = "Digite o nome da loja";
-    msg.className = "text-sm font-semibold text-red-600";
-    return;
-  }
-
-  fetch("http://localhost:3000/lojas", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ nome }),
-  })
-    .then((res) => {
-      if (!res.ok) {
-        return res.json().then((err) => {
-          throw new Error(err.message || "Erro ao salvar loja");
-        });
-      }
-      return res.json();
-    })
-    .then((json) => {
-      showToast("Loja criada com sucesso!");
-      fecharModalNovaLojaEdit();
-      // Recarregar lojas e atualizar select
-      carregarLojasAPI().then(() => {
-        // Atualizar select do modal de edição
-        atualizarSelectLojaEdit();
-      });
-    })
-    .catch((err) => {
-      console.error(err);
-      msg.textContent = err.message || "Erro ao salvar loja";
-      msg.className = "text-sm font-semibold text-red-600";
-    });
 }
 
 function atualizarSelectLojaEdit() {
@@ -1156,6 +1101,7 @@ function atualizarSelectLojaEdit() {
     const currentValue = editSaidaLoja.value;
     editSaidaLoja.innerHTML =
       '<option value="">Selecione...</option>' +
+      '<option value="__nova__">+ Cadastrar outra loja...</option>' +
       lojas
         .map((loja) => `<option value="${loja.nome}">${loja.nome}</option>`)
         .join("");
@@ -1179,21 +1125,18 @@ document.addEventListener("DOMContentLoaded", () => {
     saidaLoja.addEventListener("change", handleLojaChange);
   }
   
+  // Event listener para o select de loja do modal de edição
+  const editSaidaLoja = document.getElementById("editSaidaLoja");
+  if (editSaidaLoja) {
+    editSaidaLoja.addEventListener("change", handleLojaEditChange);
+  }
+  
   // Event listener para o formulário de nova loja
   const formNovaLoja = document.getElementById("formNovaLoja");
   if (formNovaLoja) {
     formNovaLoja.addEventListener("submit", (e) => {
       e.preventDefault();
       salvarNovaLoja();
-    });
-  }
-  
-  // Event listener para o formulário de nova loja no modal de edição
-  const formNovaLojaEdit = document.getElementById("formNovaLojaEdit");
-  if (formNovaLojaEdit) {
-    formNovaLojaEdit.addEventListener("submit", (e) => {
-      e.preventDefault();
-      salvarNovaLojaEdit();
     });
   }
   
