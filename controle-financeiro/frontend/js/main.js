@@ -608,6 +608,9 @@ function editSaida(saida) {
     const modal = document.getElementById("modalEditarSaida");
     modal.classList.remove("hidden");
     modal.classList.add("flex");
+
+    // Inicializar visibilidade dos campos de parcelamento
+    inicializarToggleParcelamentoEdit();
   }).catch(err => {
     console.error("Erro ao carregar dados do modal:", err);
     // Mesmo com erro, abre o modal
@@ -624,6 +627,9 @@ function editSaida(saida) {
     const modal = document.getElementById("modalEditarSaida");
     modal.classList.remove("hidden");
     modal.classList.add("flex");
+
+    // Inicializar visibilidade dos campos de parcelamento
+    inicializarToggleParcelamentoEdit();
   });
 }
 
@@ -761,6 +767,32 @@ function fecharModalEditarSaida() {
   const modal = document.getElementById("modalEditarSaida");
   modal.classList.add("hidden");
   modal.classList.remove("flex");
+}
+
+// Toggle de parcelamento no modal de edição de saída
+function inicializarToggleParcelamentoEdit() {
+  const editSaidaPagamento = document.getElementById("editSaidaPagamento");
+  const editCamposParcelamento = document.getElementById("editCamposParcelamento");
+  
+  if (editSaidaPagamento && editCamposParcelamento) {
+    function toggleParcelamentoEdit() {
+      if (editSaidaPagamento.value === "Crédito") {
+        editCamposParcelamento.classList.remove("hidden");
+      } else {
+        editCamposParcelamento.classList.add("hidden");
+        // Resetar parcelas para 1x quando não for crédito
+        document.getElementById("editSaidaParcelas").value = "1";
+        document.getElementById("editSaidaParcelaAtual").value = "1";
+      }
+    }
+    
+    // Inicializar estado
+    toggleParcelamentoEdit();
+    
+    // Adicionar event listener
+    editSaidaPagamento.removeEventListener("change", toggleParcelamentoEdit);
+    editSaidaPagamento.addEventListener("change", toggleParcelamentoEdit);
+  }
 }
 
 document
