@@ -11,6 +11,11 @@ let currentPeriod = 'semester';
 let charts = {};
 let deleteTarget = { type: null, id: null };
 
+// Dados para os selects do modal de edição
+let categoriasSaida = [];
+let tiposPagamento = [];
+let lojas = [];
+
 // Colors for charts
 const colors = {
     emerald: ['#10b981', '#34d399', '#6ee7b7', '#a7f3d0', '#d1fae5'],
@@ -1029,5 +1034,230 @@ async function carregarCategoriasEntrada() {
             `;
         }
     }
+}
+
+// ========== Funções para o Modal de Edição de Saída (reutilizadas do main.js) ==========
+
+// Carregar categorias de saída para o modal de edição
+function carregarCategoriasSaidaModal() {
+    return new Promise((resolve, reject) => {
+        const select = document.getElementById("editSaidaCategoria");
+        if (!select) {
+            resolve();
+            return;
+        }
+        
+        // Se já tem opções, resolver imediatamente
+        if (categoriasSaida.length > 0) {
+            select.innerHTML = categoriasSaida
+                .map((cat) => `<option value="${cat}">${cat}</option>`)
+                .join("");
+            resolve();
+            return;
+        }
+        
+        // Caso contrário, carregar da API
+        fetch('http://localhost:3000/categorias/saidas')
+            .then(res => {
+                if (!res.ok) throw new Error('Erro ao carregar categorias');
+                return res.json();
+            })
+            .then(json => {
+                categoriasSaida = (json.data || []).map(cat => cat.nome);
+                select.innerHTML = categoriasSaida
+                    .map((cat) => `<option value="${cat}">${cat}</option>`)
+                    .join("");
+                resolve();
+            })
+            .catch(err => {
+                console.error('Erro ao carregar categorias de saída:', err);
+                // Usar categorias padrão em caso de erro
+                categoriasSaida = [
+                    "Transporte", "Alimentação", "Autocuidado", "Moradia", "Saúde",
+                    "Educação", "Lazer", "Vestuário", "MG", "Outros"
+                ];
+                select.innerHTML = categoriasSaida
+                    .map((cat) => `<option value="${cat}">${cat}</option>`)
+                    .join("");
+                resolve();
+            });
+    });
+}
+
+// Carregar tipos de pagamento para o modal de edição
+function carregarTiposPagamentoModal() {
+    return new Promise((resolve, reject) => {
+        const select = document.getElementById("editSaidaPagamento");
+        if (!select) {
+            resolve();
+            return;
+        }
+        
+        // Se já tem opções, resolver imediatamente
+        if (tiposPagamento.length > 0) {
+            select.innerHTML =
+                '<option value="">Selecione...</option>' +
+                tiposPagamento
+                    .map((tipo) => `<option value="${tipo}">${tipo}</option>`)
+                    .join("");
+            resolve();
+            return;
+        }
+        
+        // Caso contrário, carregar da API
+        fetch('http://localhost:3000/tipos-pagamento')
+            .then(res => {
+                if (!res.ok) throw new Error('Erro ao carregar tipos de pagamento');
+                return res.json();
+            })
+            .then(json => {
+                tiposPagamento = (json.data || []).map(tipo => tipo.nome);
+                select.innerHTML =
+                    '<option value="">Selecione...</option>' +
+                    tiposPagamento
+                        .map((tipo) => `<option value="${tipo}">${tipo}</option>`)
+                        .join("");
+                resolve();
+            })
+            .catch(err => {
+                console.error('Erro ao carregar tipos de pagamento:', err);
+                // Usar tipos padrão em caso de erro
+                tiposPagamento = ['PIX', 'Crédito', 'Débito', 'Dinheiro', 'Boleto'];
+                select.innerHTML =
+                    '<option value="">Selecione...</option>' +
+                    tiposPagamento
+                        .map((tipo) => `<option value="${tipo}">${tipo}</option>`)
+                        .join("");
+                resolve();
+            });
+    });
+}
+
+// Carregar lojas para o modal de edição
+function carregarLojasModal() {
+    return new Promise((resolve, reject) => {
+        const select = document.getElementById("editSaidaLoja");
+        if (!select) {
+            resolve();
+            return;
+        }
+        
+        // Se já tem opções, resolver imediatamente
+        if (lojas.length > 0) {
+            atualizarSelectLojaEdit();
+            resolve();
+            return;
+        }
+        
+        // Caso contrário, carregar da API
+        fetch('http://localhost:3000/lojas')
+            .then(res => {
+                if (!res.ok) throw new Error('Erro ao carregar lojas');
+                return res.json();
+            })
+            .then(json => {
+                lojas = (json.data || []).map(loja => ({ id: loja.id, nome: loja.nome }));
+                atualizarSelectLojaEdit();
+                resolve();
+            })
+            .catch(err => {
+                console.error('Erro ao carregar lojas:', err);
+                // Manter array vazio em caso de erro
+                lojas = [];
+                atualizarSelectLojaEdit();
+                resolve();
+            });
+    });
+}
+
+// Atualizar select de loja no modal de edição
+function atualizarSelectLojaEdit() {
+    const editSaidaLoja = document.getElementById("editSaidaLoja");
+    if (editSaidaLoja) {
+        const currentValue = editSaidaLoja.value;
+        editSaidaLoja.innerHTML =
+            '<option value="">Selecione...</option>' +
+            lojas
+                .map((loja) => `<option value="${loja.nome}">${loja.nome}</option>`)
+                .join("");
+        
+        // Manter o valor selecionado se ainda existir
+        if (currentValue && lojas.some(l => l.nome === currentValue)) {
+            editSaidaLoja.value = currentValue;
+        }
+    }
+}
+
+// Toggle de parcelamento no modal de edição de saída
+function inicializarToggleParcelamentoEdit() {
+    const editSaidaPagamento = document.getElementById("editSaidaPagamento");
+    const editCamposParcelamento = document.getElementById("editCamposParcelamento");
+    
+    if (editSaidaPagamento && editCamposParcelamento) {
+        function toggleParcelamentoEdit() {
+            if (editSaidaPagamento.value === "Crédito") {
+                editCamposParcelamento.classList.remove("hidden");
+            } else {
+                editCamposParcelamento.classList.add("hidden");
+                // Resetar parcelas para 1x quando não for crédito
+                document.getElementById("editSaidaParcelas").value = "1";
+                document.getElementById("editSaidaParcelaAtual").value = "1";
+            }
+        }
+        
+        // Inicializar estado
+        toggleParcelamentoEdit();
+        
+        // Adicionar event listener
+        editSaidaPagamento.removeEventListener("change", toggleParcelamentoEdit);
+        editSaidaPagamento.addEventListener("change", toggleParcelamentoEdit);
+    }
+}
+
+// Função editSaida atualizada para usar selects dinâmicos
+function editSaida(saida) {
+    // Primeiro, populamos os selects e depois definimos os valores
+    Promise.all([
+        carregarCategoriasSaidaModal(),
+        carregarTiposPagamentoModal(),
+        carregarLojasModal()
+    ]).then(() => {
+        // Agora os selects estão populados, podemos definir os valores
+        document.getElementById("editSaidaId").value = saida.id;
+        document.getElementById("editSaidaLoja").value = saida.loja || "";
+        document.getElementById("editSaidaCategoria").value = saida.categoria || "";
+        document.getElementById("editSaidaDescricao").value = saida.descricao || "";
+        document.getElementById("editSaidaValor").value = saida.valor;
+        document.getElementById("editSaidaPagamento").value = saida.tipo_pagamento || "PIX";
+        document.getElementById("editSaidaData").value = saida.data;
+        document.getElementById("editSaidaParcelas").value = saida.parcelas || 1;
+        document.getElementById("editSaidaParcelaAtual").value = saida.parcela_atual || 1;
+
+        const modal = document.getElementById("modalEditarSaida");
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+
+        // Inicializar visibilidade dos campos de parcelamento
+        inicializarToggleParcelamentoEdit();
+    }).catch(err => {
+        console.error("Erro ao carregar dados do modal:", err);
+        // Mesmo com erro, abre o modal
+        document.getElementById("editSaidaId").value = saida.id;
+        document.getElementById("editSaidaLoja").value = saida.loja || "";
+        document.getElementById("editSaidaCategoria").value = saida.categoria || "";
+        document.getElementById("editSaidaDescricao").value = saida.descricao || "";
+        document.getElementById("editSaidaValor").value = saida.valor;
+        document.getElementById("editSaidaPagamento").value = saida.tipo_pagamento || "PIX";
+        document.getElementById("editSaidaData").value = saida.data;
+        document.getElementById("editSaidaParcelas").value = saida.parcelas || 1;
+        document.getElementById("editSaidaParcelaAtual").value = saida.parcela_atual || 1;
+
+        const modal = document.getElementById("modalEditarSaida");
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+
+        // Inicializar visibilidade dos campos de parcelamento
+        inicializarToggleParcelamentoEdit();
+    });
 }
 
