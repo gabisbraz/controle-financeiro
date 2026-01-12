@@ -641,16 +641,19 @@ function carregarCategoriasSaidaModal() {
       resolve();
       return;
     }
-    
+
     // Se já tem opções, resolver imediatamente
     if (categoriasSaida.length > 0) {
-      select.innerHTML = categoriasSaida
-        .map((cat) => `<option value="${cat}">${cat}</option>`)
-        .join("");
+      select.innerHTML =
+        '<option value="">Selecione...</option>' +
+        '<option value="__nova__" class="font-semibold text-blue-600">+ Nova categoria...</option>' +
+        categoriasSaida
+          .map((cat) => `<option value="${cat}">${cat}</option>`)
+          .join("");
       resolve();
       return;
     }
-    
+
     // Caso contrário, carregar da API
     fetch('http://localhost:3000/categorias/saidas')
       .then(res => {
@@ -659,9 +662,12 @@ function carregarCategoriasSaidaModal() {
       })
       .then(json => {
         categoriasSaida = (json.data || []).map(cat => cat.nome);
-        select.innerHTML = categoriasSaida
-          .map((cat) => `<option value="${cat}">${cat}</option>`)
-          .join("");
+        select.innerHTML =
+          '<option value="">Selecione...</option>' +
+          '<option value="__nova__" class="font-semibold text-blue-600">+ Nova categoria...</option>' +
+          categoriasSaida
+            .map((cat) => `<option value="${cat}">${cat}</option>`)
+            .join("");
         resolve();
       })
       .catch(err => {
@@ -671,9 +677,12 @@ function carregarCategoriasSaidaModal() {
           "Transporte", "Alimentação", "Autocuidado", "Moradia", "Saúde",
           "Educação", "Lazer", "Vestuário", "MG", "Outros"
         ];
-        select.innerHTML = categoriasSaida
-          .map((cat) => `<option value="${cat}">${cat}</option>`)
-          .join("");
+        select.innerHTML =
+          '<option value="">Selecione...</option>' +
+          '<option value="__nova__" class="font-semibold text-blue-600">+ Nova categoria...</option>' +
+          categoriasSaida
+            .map((cat) => `<option value="${cat}">${cat}</option>`)
+            .join("");
         resolve();
       });
   });
@@ -686,18 +695,19 @@ function carregarTiposPagamentoModal() {
       resolve();
       return;
     }
-    
+
     // Se já tem opções, resolver imediatamente
     if (tiposPagamento.length > 0) {
       select.innerHTML =
         '<option value="">Selecione...</option>' +
+        '<option value="__nova__" class="font-semibold text-purple-600">+ Novo tipo...</option>' +
         tiposPagamento
           .map((tipo) => `<option value="${tipo}">${tipo}</option>`)
           .join("");
       resolve();
       return;
     }
-    
+
     // Caso contrário, carregar da API
     fetch('http://localhost:3000/tipos-pagamento')
       .then(res => {
@@ -708,6 +718,7 @@ function carregarTiposPagamentoModal() {
         tiposPagamento = (json.data || []).map(tipo => tipo.nome);
         select.innerHTML =
           '<option value="">Selecione...</option>' +
+          '<option value="__nova__" class="font-semibold text-purple-600">+ Novo tipo...</option>' +
           tiposPagamento
             .map((tipo) => `<option value="${tipo}">${tipo}</option>`)
             .join("");
@@ -719,6 +730,7 @@ function carregarTiposPagamentoModal() {
         tiposPagamento = ['Débito', 'Crédito', 'Pix', 'Dinheiro', 'Transferência'];
         select.innerHTML =
           '<option value="">Selecione...</option>' +
+          '<option value="__nova__" class="font-semibold text-purple-600">+ Novo tipo...</option>' +
           tiposPagamento
             .map((tipo) => `<option value="${tipo}">${tipo}</option>`)
             .join("");
@@ -734,14 +746,24 @@ function carregarLojasModal() {
       resolve();
       return;
     }
-    
+
     // Se já tem opções, resolver imediatamente
     if (lojas.length > 0) {
-      atualizarSelectLojaEdit();
+      const currentValue = select.value;
+      select.innerHTML =
+        '<option value="">Selecione...</option>' +
+        '<option value="__nova__" class="font-semibold text-emerald-600">+ Cadastrar nova loja...</option>' +
+        lojas
+          .map((loja) => `<option value="${loja.nome}">${loja.nome}</option>`)
+          .join("");
+      // Manter o valor selecionado se ainda existir
+      if (currentValue && lojas.some(l => l.nome === currentValue)) {
+        select.value = currentValue;
+      }
       resolve();
       return;
     }
-    
+
     // Caso contrário, carregar da API
     fetch('http://localhost:3000/lojas')
       .then(res => {
@@ -750,14 +772,34 @@ function carregarLojasModal() {
       })
       .then(json => {
         lojas = (json.data || []).map(loja => ({ id: loja.id, nome: loja.nome }));
-        atualizarSelectLojaEdit();
+        const currentValue = select.value;
+        select.innerHTML =
+          '<option value="">Selecione...</option>' +
+          '<option value="__nova__" class="font-semibold text-emerald-600">+ Cadastrar nova loja...</option>' +
+          lojas
+            .map((loja) => `<option value="${loja.nome}">${loja.nome}</option>`)
+            .join("");
+        // Manter o valor selecionado se ainda existir
+        if (currentValue && lojas.some(l => l.nome === currentValue)) {
+          select.value = currentValue;
+        }
         resolve();
       })
       .catch(err => {
         console.error('Erro ao carregar lojas:', err);
         // Manter array vazio em caso de erro
         lojas = [];
-        atualizarSelectLojaEdit();
+        const currentValue = select.value;
+        select.innerHTML =
+          '<option value="">Selecione...</option>' +
+          '<option value="__nova__" class="font-semibold text-emerald-600">+ Cadastrar nova loja...</option>' +
+          lojas
+            .map((loja) => `<option value="${loja.nome}">${loja.nome}</option>`)
+            .join("");
+        // Manter o valor selecionado se ainda existir
+        if (currentValue && lojas.some(l => l.nome === currentValue)) {
+          select.value = currentValue;
+        }
         resolve();
       });
   });
@@ -1000,17 +1042,23 @@ function atualizarSelectsCategorias() {
   // Modal editar entrada
   const editEntradaCategoria = document.getElementById("editEntradaCategoria");
   if (editEntradaCategoria) {
-    editEntradaCategoria.innerHTML = categoriasEntrada
-      .map((cat) => `<option value="${cat}">${cat}</option>`)
-      .join("");
+    editEntradaCategoria.innerHTML =
+      '<option value="">Selecione...</option>' +
+      '<option value="__nova__" class="font-semibold text-blue-600">+ Nova categoria...</option>' +
+      categoriasEntrada
+        .map((cat) => `<option value="${cat}">${cat}</option>`)
+        .join("");
   }
 
   // Modal editar saída
   const editSaidaCategoria = document.getElementById("editSaidaCategoria");
   if (editSaidaCategoria) {
-    editSaidaCategoria.innerHTML = categoriasSaida
-      .map((cat) => `<option value="${cat}">${cat}</option>`)
-      .join("");
+    editSaidaCategoria.innerHTML =
+      '<option value="">Selecione...</option>' +
+      '<option value="__nova__" class="font-semibold text-blue-600">+ Nova categoria...</option>' +
+      categoriasSaida
+        .map((cat) => `<option value="${cat}">${cat}</option>`)
+        .join("");
   }
 }
 
@@ -1306,6 +1354,33 @@ document.addEventListener("DOMContentLoaded", () => {
     editSaidaLoja.addEventListener("change", handleLojaEditChange);
   }
 
+  // Event listeners para categoria no modal de edição de entrada
+  const editEntradaCategoria = document.getElementById("editEntradaCategoria");
+  if (editEntradaCategoria) {
+    editEntradaCategoria.addEventListener("change", handleCategoriaChange);
+  }
+
+  // Event listeners para categoria no modal de edição de saída
+  const editSaidaCategoria = document.getElementById("editSaidaCategoria");
+  if (editSaidaCategoria) {
+    editSaidaCategoria.addEventListener("change", handleCategoriaChange);
+  }
+
+  // Event listener para tipo de pagamento no modal de edição de saída
+  const editSaidaPagamento = document.getElementById("editSaidaPagamento");
+  if (editSaidaPagamento) {
+    editSaidaPagamento.addEventListener("change", function() {
+      if (this.value === "__nova__") {
+        // Primeiro abre o modal
+        abrirModalNovoTipoPagamento();
+        // Depois reseta o select com um pequeno delay para evitar problemas
+        setTimeout(() => {
+          this.value = "";
+        }, 10);
+      }
+    });
+  }
+
   // Event listener para o formulário de nova loja
   const formNovaLoja = document.getElementById("formNovaLoja");
   if (formNovaLoja) {
@@ -1337,7 +1412,17 @@ document.addEventListener("DOMContentLoaded", () => {
   // Event listeners para novo tipo de pagamento
   const saidaTipoPagamento = document.getElementById("saidaTipoPagamento");
   if (saidaTipoPagamento) {
-    saidaTipoPagamento.addEventListener("change", handleTipoPagamentoChange);
+    // Usar função inline para garantir funcionamento
+    saidaTipoPagamento.addEventListener("change", function() {
+      if (this.value === "__nova__") {
+        // Primeiro abre o modal
+        abrirModalNovoTipoPagamento();
+        // Depois reseta o select com um pequeno delay para evitar problemas
+        setTimeout(() => {
+          this.value = "";
+        }, 10);
+      }
+    });
   }
 
   const formNovoTipoPagamento = document.getElementById("formNovoTipoPagamento");
