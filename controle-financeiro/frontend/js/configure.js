@@ -421,30 +421,94 @@ function confirmarEntrada() {
     });
 }
 
-// ================= CARTÃO DE CRÉDITO =================
+// ================= CARTÕES DE CRÉDITO =================
 
-function carregarCartao() {
+function carregarCartoes() {
+  const tabela = document.getElementById('tabelaCartoes');
+  if (!tabela) return;
+
   fetch('http://localhost:3000/cartao')
-    .then(res => res.json())
-    .then(dados => {
-      if (dados) {
-        document.getElementById('nomeCartao').value = dados.nome_cartao;
-        document.getElementById('diaVencimento').value = dados.dia_vencimento;
-      }
+    .then(res => {
+      if (!res.ok) throw new Error('Erro ao carregar cartões');
+      return res.json();
+    })
+    .then(json => {
+      const cartoes = json.data || [];
+      renderizarTabelaCartoes(cartoes);
+    })
+    .catch(err => {
+      console.error(err);
+      tabela.innerHTML = `
+        <tr>
+          <td colspan="4" class="px-4 py-8 text-center text-red-500">
+            <i class="fas fa-exclamation-circle text-2xl"></i>
+            <p class="mt-2">Erro ao carregar cartões. Tente novamente.</p>
+          </td>
+        </tr>
+      `;
     });
 }
 
+function renderizarTabelaCartoes(cartoes) {
+  const tabela = document.getElementById('tabelaCartoes');
+
+  if (!tabela) return;
+
+  if (cartoes.length === 0) {
+    tabela.innerHTML = `
+      <tr>
+        <td colspan="4" class="px-4 py-8 text-center text-gray-500">
+          <i class="fas fa-credit-card text-4xl mb-2"></i>
+          <p>Nenhum cartão cadastrado</p>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tabela.innerHTML = cartoes
+    .map(cartao => `
+      <tr class="hover:bg-gray-50 transition">
+        <td class="px-4 py-3 text-sm text-gray-600">${cartao.id}</td>
+        <td class="px-4 py-3 text-sm font-medium text-gray-900">${escapeHtml(cartao.nome_cartao)}</td>
+        <td class="px-4 py-3 text-sm text-gray-600">Dia ${cartao.dia_vencimento}</td>
+        <td class="px-4 py-3 text-center">
+          <button
+            onclick="abrirModalEditarCartao(${cartao.id}, '${escapeHtml(cartao.nome_cartao)}', ${cartao.dia_vencimento})"
+            class="text-blue-500 hover:text-blue-700 transition mr-2"
+            title="Editar cartão"
+          >
+            <i class="fas fa-edit"></i>
+          </button>
+          <button
+            onclick="excluirCartao(${cartao.id})"
+            class="text-red-500 hover:text-red-700 transition"
+            title="Excluir cartão"
+          >
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </td>
+      </tr>
+    `)
+    .join('');
+}
+
 function salvarCartao() {
-  const nome_cartao = document.getElementById('nomeCartao').value.trim();
-  const dia_vencimento = document.getElementById('diaVencimento').value;
+  const inputNome = document.getElementById('novoNomeCartao');
+  const inputDia = document.getElementById('novoDiaVencimento');
+  const msg = document.getElementById('cartaoMsg');
+  const nome_cartao = inputNome.value.trim();
+  const dia_vencimento = inputDia.value;
 
   if (!nome_cartao || !dia_vencimento) {
-    alert('Preencha todos os campos');
+    msg.textContent = 'Preencha todos os campos';
+    msg.className = 'text-sm mt-2 font-semibold text-red-600';
     return;
   }
 
   if (dia_vencimento < 1 || dia_vencimento > 31) {
-    alert('Dia de vencimento inválido');
+    msg.textContent = 'Dia de vencimento deve ser entre 1 e 31';
+    msg.className = 'text-sm mt-2 font-semibold text-red-600';
     return;
   }
 
@@ -453,20 +517,157 @@ function salvarCartao() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ nome_cartao, dia_vencimento })
   })
-    .then(res => res.json())
+    .then(res => {
+      if (!res.ok) throw new Error('Erro ao salvar cartão');
+      return res.json();
+    })
     .then(() => {
-      document.getElementById('cartaoMsg').innerText =
-        'Dados do cartão salvos com sucesso!';
-      document.getElementById('cartaoMsg').className =
-        'text-green-600 text-sm font-semibold';
+      msg.textContent = 'Cartão salvo com sucesso!';
+      msg.className = 'text-sm mt-2 font-semibold text-green-600';
+      inputNome.value = '';
+      inputDia.value = '';
+      carregarCartoes();
+    })
+    .catch(err => {
+      console.error(err);
+      msg.textContent = 'Erro ao salvar cartão';
+      msg.className = 'text-sm mt-2 font-semibold text-red-600';
     });
 }
 
+function abrirModalEditarCartao(id, nome, dia) {
+  const modal = document.getElementById('modalEditar');
+  const inputId = document.getElementById('editarId');
+  const inputTipo = document.getElementById('editarTipo');
+  const inputNome = document.getElementById('editarNome');
+  const titulo = document.getElementById('modalEditarTitulo');
+  const msg = document.getElementById('editarMsg');
+
+  inputId.value = id;
+  inputTipo.value = 'cartao';
+  inputNome.value = nome;
+  titulo.textContent = 'Editar Cartão de Crédito';
+  msg.textContent = '';
+
+  // Adicionar campo de dia de vencimento ao modal
+  let diaInput = document.getElementById('editarDiaVencimento');
+  if (!diaInput) {
+    diaInput = document.createElement('div');
+    diaInput.id = 'editarDiaVencimento';
+    diaInput.className = 'mb-4';
+    diaInput.innerHTML = `
+      <label class="block text-sm font-semibold text-gray-700 mb-1 text-left">
+        Dia de vencimento
+      </label>
+      <input type="number" id="editarDiaVencimentoInput" min="1" max="31"
+        class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+        placeholder="1-31">
+    `;
+    inputNome.parentNode.parentNode.insertBefore(diaInput, inputNome.parentNode.nextSibling);
+  }
+  
+  document.getElementById('editarDiaVencimentoInput').value = dia;
+
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+  inputNome.focus();
+}
+
+function salvarEdicaoCartao() {
+  const id = document.getElementById('editarId').value;
+  const nome = document.getElementById('editarNome').value.trim();
+  const dia = document.getElementById('editarDiaVencimentoInput').value;
+  const msg = document.getElementById('editarMsg');
+
+  if (!nome || !dia) {
+    msg.textContent = 'Preencha todos os campos';
+    msg.className = 'text-sm mb-4 font-semibold text-red-600';
+    return;
+  }
+
+  if (dia < 1 || dia > 31) {
+    msg.textContent = 'Dia de vencimento deve ser entre 1 e 31';
+    msg.className = 'text-sm mb-4 font-semibold text-red-600';
+    return;
+  }
+
+  fetch(`http://localhost:3000/cartao/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nome_cartao: nome, dia_vencimento: dia })
+  })
+    .then(res => {
+      if (!res.ok) throw new Error('Erro ao atualizar cartão');
+      return res.json();
+    })
+    .then(() => {
+      fecharModalEditar();
+      carregarCartoes();
+    })
+    .catch(err => {
+      console.error(err);
+      msg.textContent = 'Erro ao atualizar cartão';
+      msg.className = 'text-sm mb-4 font-semibold text-red-600';
+    });
+}
+
+function excluirCartao(id) {
+  if (!confirm('Tem certeza que deseja excluir este cartão?')) {
+    return;
+  }
+
+  fetch(`http://localhost:3000/cartao/${id}`, {
+    method: 'DELETE'
+  })
+    .then(res => {
+      if (!res.ok) throw new Error('Erro ao excluir cartão');
+      return res.json();
+    })
+    .then(() => {
+      carregarCartoes();
+    })
+    .catch(err => {
+      console.error(err);
+      alert('Erro ao excluir cartão');
+    });
+}
+
+// Modificar a função salvarEdicao para tratar cartão
+const salvarEdicaoOriginal = salvarEdicao;
+salvarEdicao = function() {
+  const tipo = document.getElementById('editarTipo').value;
+  if (tipo === 'cartao') {
+    salvarEdicaoCartao();
+  } else {
+    salvarEdicaoOriginal();
+  }
+};
+
+// Atualizar o evento DOMContentLoaded para carregar cartões
 document.addEventListener('DOMContentLoaded', () => {
-  carregarCartao();
-  // Carregar categorias quando a aba for aberta
-  // Também carregamos no início caso o usuário vá direto para ela
+  carregarCartoes();
   carregarCategorias();
+  
+  // Adicionar event listeners para inputs de cartão
+  const inputNomeCartao = document.getElementById('novoNomeCartao');
+  if (inputNomeCartao) {
+    inputNomeCartao.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('novoDiaVencimento').focus();
+      }
+    });
+  }
+  
+  const inputDiaCartao = document.getElementById('novoDiaVencimento');
+  if (inputDiaCartao) {
+    inputDiaCartao.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        salvarCartao();
+      }
+    });
+  }
 });
 
 // ================= CATEGORIAS DE SAÍDA =================

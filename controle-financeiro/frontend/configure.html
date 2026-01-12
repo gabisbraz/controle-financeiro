@@ -192,43 +192,81 @@
                 </button>
             </div>
 
-            <!-- TAB 5 – CARTÃO -->
+            <!-- TAB 5 – CARTÕES -->
             <div id="cartao" class="tab-content p-6 hidden">
                 <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
                     <i class="fas fa-credit-card text-emerald-600"></i>
-                    Cartão de crédito
+                    Cartões de Crédito
                 </h2>
 
                 <p class="text-gray-600 mb-6">
-                    Defina o dia de vencimento do seu cartão de crédito.
+                    Cadastre seus cartões de crédito com seus respectivos dias de vencimento.
                     <br>
                     Essa informação será utilizada para cálculos futuros de fatura.
                 </p>
 
-                <div class="max-w-md space-y-4">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">
-                            Nome do cartão
-                        </label>
-                        <input id="nomeCartao" type="text"
-                            placeholder="Ex: Nubank, Itaú, Inter..."
-                            class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                <!-- Formulário de novo cartão -->
+                <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <i class="fas fa-plus-circle text-emerald-600"></i>
+                        Novo Cartão
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">
+                                Nome do cartão
+                            </label>
+                            <input id="novoNomeCartao" type="text"
+                                placeholder="Ex: Nubank, Itaú, Inter..."
+                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">
+                                Dia de vencimento
+                            </label>
+                            <input id="novoDiaVencimento" type="number" min="1" max="31"
+                                placeholder="1-31"
+                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                        </div>
+                        <div class="flex items-end">
+                            <button onclick="salvarCartao()"
+                                class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg font-semibold w-full flex items-center justify-center gap-2">
+                                <i class="fas fa-save"></i>
+                                Salvar
+                            </button>
+                        </div>
                     </div>
+                    <p id="cartaoMsg" class="text-sm mt-2 font-semibold"></p>
+                </div>
 
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">
-                            Dia de vencimento
-                        </label>
-                        <input id="diaVencimento" type="number" min="1" max="31"
-                            class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                <!-- Lista de cartões -->
+                <div class="bg-white rounded-lg border border-gray-200">
+                    <div class="bg-gray-100 px-4 py-3 border-b">
+                        <h3 class="text-lg font-semibold flex items-center gap-2">
+                            <i class="fas fa-list text-gray-600"></i>
+                            Cartões Cadastrados
+                        </h3>
                     </div>
-
-                    <button onclick="salvarCartao()"
-                        class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg font-semibold">
-                        Salvar
-                    </button>
-
-                    <p id="cartaoMsg" class="text-sm font-semibold"></p>
+                    <div class="max-h-[400px] overflow-y-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50 sticky top-0">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">ID</th>
+                                    <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Nome</th>
+                                    <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Dia Vencimento</th>
+                                    <th class="px-4 py-2 text-center text-xs font-semibold text-gray-600 uppercase">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelaCartoes" class="divide-y divide-gray-200">
+                                <tr>
+                                    <td colspan="4" class="px-4 py-8 text-center text-gray-500">
+                                        <i class="fas fa-spinner fa-spin text-2xl"></i>
+                                        <p class="mt-2">Carregando cartões...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
