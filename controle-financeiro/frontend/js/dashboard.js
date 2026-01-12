@@ -34,6 +34,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     currentPeriod = 'month';
     document.getElementById('btnMonth').classList.add('active');
     
+    // Hide monthly charts since "Este Mês" is selected by default
+    toggleMonthlyCharts();
+    
     await loadAllData();
     await loadCartaoMeses(); // Carrega os meses do cartão
     await carregarCategoriasEntrada(); // Carregar categorias de entrada do banco de dados
@@ -143,8 +146,33 @@ function setPeriod(period) {
     });
     document.getElementById(`btn${period.charAt(0).toUpperCase() + period.slice(1)}`).classList.add('active');
     
+    // Toggle charts visibility based on period
+    toggleMonthlyCharts();
+    
     applyFilter();
     updateDashboard();
+}
+
+// Toggle visibility of monthly charts (Entradas vs Saídas por Mês and Fluxo de Caixa)
+function toggleMonthlyCharts() {
+    const chartsRow1 = document.getElementById('chartsRow1');
+    if (chartsRow1) {
+        if (currentPeriod === 'month') {
+            chartsRow1.classList.add('hidden');
+        } else {
+            chartsRow1.classList.remove('hidden');
+        }
+    }
+    
+    // Toggle Comprometimento Cartão Crédito chart (visible only in 'month' period)
+    const cartaoCreditoContainer = document.getElementById('chartCartaoCreditoContainer');
+    if (cartaoCreditoContainer) {
+        if (currentPeriod === 'month') {
+            cartaoCreditoContainer.classList.remove('hidden');
+        } else {
+            cartaoCreditoContainer.classList.add('hidden');
+        }
+    }
 }
 
 // Apply custom period
@@ -159,6 +187,9 @@ function applyCustomPeriod() {
     
     currentPeriod = 'custom';
     document.querySelectorAll('.period-btn').forEach(btn => btn.classList.remove('active'));
+    
+    // Show monthly charts for custom periods
+    toggleMonthlyCharts();
     
     applyFilter(startDate, endDate);
     updateDashboard();
@@ -765,6 +796,42 @@ function initCharts() {
             }
         }
     });
+
+    // Comprometimento Cartão Crédito Bar Chart
+    charts.cartaoCredito = new Chart(document.getElementById('chartCartaoCredito'), {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Total Gasto no Crédito',
+                data: [],
+                backgroundColor: [],
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: context => formatCurrency(context.raw)
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: value => formatCurrency(value)
+                    }
+                }
+            }
+        }
+    });
 }
 
 // Update all charts with filtered data
@@ -806,6 +873,13 @@ function updateCharts() {
     charts.topLojas.data.labels = topLojas.labels;
     charts.topLojas.data.datasets[0].data = topLojas.values;
     charts.topLojas.update();
+    
+    // Update Comprometimento Cartão Crédito
+    const cartaoCreditoData = getCartaoCreditoData();
+    charts.cartaoCredito.data.labels = cartaoCreditoData.labels;
+    charts.cartaoCredito.data.datasets[0].data = cartaoCreditoData.values;
+    charts.cartaoCredito.data.datasets[0].backgroundColor = cartaoCreditoData.backgroundColors;
+    charts.cartaoCredito.update();
 }
 
 // Get monthly aggregated data
@@ -886,6 +960,59 @@ function getTopLojas(limit = 10) {
         labels: sorted.map(([label]) => label),
         values: sorted.map(([, value]) => value)
     };
+}
+
+// Get credit card installment data by due date
+function getCartaoCreditoData() {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth(); // 0-11
+    
+    // Filter only credit card expenses
+    const creditoSaidas = filteredSaidas.filter(s => {
+        const tipo = (s.tipo_pagamento || '').toLowerCase();
+        return tipo.includes('credito') || tipo === 'crédito' || tipo === 'cartao';
+    });
+    
+    // Group by month
+    const monthlyCredito = {};
+    
+    creditoSaidas.forEach(s => {
+        const date = new Date(s.data + 'T00:00:00');
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        monthlyCredito[key] = (monthlyCredito[key] || 0) + (parseFloat(s.valor) || 0);
+    });
+    
+    // Generate labels for next 12 months including current month
+    const labels = [];
+    const values = [];
+    const backgroundColors = [];
+    const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    
+    for (let i = 0; i < 12; i++) {
+        let month = currentMonth + i;
+        let year = currentYear;
+        
+        if (month > 11) {
+            month = month - 12;
+            year = currentYear + 1;
+        }
+        
+        const key = `${year}-${String(month + 1).padStart(2, '0')}`;
+        const label = `${monthNames[month]}/${year.toString().slice(2)}`;
+        
+        labels.push(label);
+        values.push(monthlyCredito[key] || 0);
+        
+        // Current month gets different color (blue), future months get purple
+        if (i === 0) {
+            backgroundColors.push(colors.blue[0]);
+        } else {
+            backgroundColors.push(colors.purple[1]);
+        }
+    }
+    
+    return { labels, values, backgroundColors };
 }
 
 async function loadCartaoMeses() {
