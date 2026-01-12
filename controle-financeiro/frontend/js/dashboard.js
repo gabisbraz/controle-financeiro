@@ -16,6 +16,11 @@ let categoriasSaida = [];
 let tiposPagamento = [];
 let lojas = [];
 
+// Filtros dinâmicos da tabela de saídas
+let filtroTabelaLoja = '';
+let filtroTabelaCategoria = '';
+let filtroTabelaTipoPagamento = '';
+
 // Colors for charts
 const colors = {
     emerald: ['#10b981', '#34d399', '#6ee7b7', '#a7f3d0', '#d1fae5'],
@@ -79,6 +84,12 @@ async function loadAllData() {
         saidas = saidasData.data || [];
         
         applyFilter();
+        
+        // Carregar filtros dinâmicos da tabela de saídas
+        carregarFiltrosDinamicosTabela();
+        
+        // Atualizar contagem inicial
+        atualizarContagemFiltrada();
     } catch (error) {
         console.error('Erro ao carregar dados:', error);
     }
@@ -246,6 +257,10 @@ function updateDashboard() {
     updateSummaryCards();
     updateCharts();
     updateTables();
+    
+    // Atualizar filtros e contagem
+    carregarFiltrosDinamicosTabela();
+    atualizarContagemFiltrada();
 }
 
 // Switch between tabs
@@ -279,8 +294,23 @@ function updateTables() {
 // Render tabela de saídas
 function renderTabelaSaidas() {
     const tbody = document.getElementById('tabelaSaidas');
+    const footer = document.getElementById('tabelaSaidasFooter');
+    const footerTotal = document.getElementById('totalSaidasFooter');
     
-    if (filteredSaidas.length === 0) {
+    // Aplicar filtros dinâmicos
+    let dadosFiltrados = filteredSaidas;
+    
+    if (filtroTabelaLoja) {
+        dadosFiltrados = dadosFiltrados.filter(s => s.loja === filtroTabelaLoja);
+    }
+    if (filtroTabelaCategoria) {
+        dadosFiltrados = dadosFiltrados.filter(s => s.categoria === filtroTabelaCategoria);
+    }
+    if (filtroTabelaTipoPagamento) {
+        dadosFiltrados = dadosFiltrados.filter(s => s.tipo_pagamento === filtroTabelaTipoPagamento);
+    }
+    
+    if (dadosFiltrados.length === 0) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="8" class="px-4 py-8 text-center text-gray-500">
@@ -289,11 +319,21 @@ function renderTabelaSaidas() {
                 </td>
             </tr>
         `;
+        if (footer) footer.classList.add('hidden');
         return;
     }
     
+    // Calcular total dos valores filtrados
+    const totalFiltrado = dadosFiltrados.reduce((sum, s) => sum + (parseFloat(s.valor) || 0), 0);
+    
+    // Atualizar footer com o total
+    if (footer && footerTotal) {
+        footerTotal.textContent = `- ${formatCurrency(totalFiltrado)}`;
+        footer.classList.remove('hidden');
+    }
+    
     // Sort by date descending
-    const sortedSaidas = [...filteredSaidas].sort((a, b) => new Date(b.data) - new Date(a.data));
+    const sortedSaidas = [...dadosFiltrados].sort((a, b) => new Date(b.data) - new Date(a.data));
     
     tbody.innerHTML = sortedSaidas.map(s => `
         <tr class="hover:bg-gray-50 transition">
@@ -1353,5 +1393,102 @@ function editSaida(saida) {
         // Inicializar visibilidade dos campos de parcelamento
         inicializarToggleParcelamentoEdit();
     });
+}
+
+// ========== Filtros Dinâmicos para Tabela de Saídas ==========
+
+// Carregar valores únicos para os filtros da tabela de saídas
+function carregarFiltrosDinamicosTabela() {
+    // Usar todas as saídas (não filtradas por período) para ter todas as opções disponíveis
+    const todasSaidas = saidas;
+    
+    // Extrair valores únicos para cada campo
+    const lojasUnicas = [...new Set(todasSaidas.map(s => s.loja).filter(Boolean))].sort();
+    const categoriasUnicas = [...new Set(todasSaidas.map(s => s.categoria).filter(Boolean))].sort();
+    const tiposPagamentoUnicos = [...new Set(todasSaidas.map(s => s.tipo_pagamento).filter(Boolean))].sort();
+    
+    // Preencher select de Lojas
+    const selectLoja = document.getElementById('filtroLoja');
+    if (selectLoja) {
+        const valorAtual = selectLoja.value;
+        selectLoja.innerHTML = '<option value="">Todas as Lojas</option>' +
+            lojasUnicas.map(loja => `<option value="${loja}">${loja}</option>`).join('');
+        selectLoja.value = valorAtual;
+    }
+    
+    // Preencher select de Categorias
+    const selectCategoria = document.getElementById('filtroCategoria');
+    if (selectCategoria) {
+        const valorAtual = selectCategoria.value;
+        selectCategoria.innerHTML = '<option value="">Todas as Categorias</option>' +
+            categoriasUnicas.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+        selectCategoria.value = valorAtual;
+    }
+    
+    // Preencher select de Tipos de Pagamento
+    const selectTipoPagamento = document.getElementById('filtroTipoPagamento');
+    if (selectTipoPagamento) {
+        const valorAtual = selectTipoPagamento.value;
+        selectTipoPagamento.innerHTML = '<option value="">Todos os Tipos de Pgto</option>' +
+            tiposPagamentoUnicos.map(tipo => `<option value="${tipo}">${tipo}</option>`).join('');
+        selectTipoPagamento.value = valorAtual;
+    }
+}
+
+// Aplicar filtros na tabela de saídas
+function aplicarFiltrosTabela() {
+    // Obter valores dos selects
+    filtroTabelaLoja = document.getElementById('filtroLoja')?.value || '';
+    filtroTabelaCategoria = document.getElementById('filtroCategoria')?.value || '';
+    filtroTabelaTipoPagamento = document.getElementById('filtroTipoPagamento')?.value || '';
+    
+    // Renderizar tabela com filtros aplicados
+    renderTabelaSaidas();
+    
+    // Atualizar contagem
+    atualizarContagemFiltrada();
+}
+
+// Limpar filtros da tabela de saídas
+function limparFiltrosTabela() {
+    filtroTabelaLoja = '';
+    filtroTabelaCategoria = '';
+    filtroTabelaTipoPagamento = '';
+    
+    // Limpar selects
+    const selectLoja = document.getElementById('filtroLoja');
+    const selectCategoria = document.getElementById('filtroCategoria');
+    const selectTipoPagamento = document.getElementById('filtroTipoPagamento');
+    
+    if (selectLoja) selectLoja.value = '';
+    if (selectCategoria) selectCategoria.value = '';
+    if (selectTipoPagamento) selectTipoPagamento.value = '';
+    
+    // Renderizar tabela sem filtros
+    renderTabelaSaidas();
+    
+    // Atualizar contagem
+    atualizarContagemFiltrada();
+}
+
+// Atualizar contagem de registros filtrados
+function atualizarContagemFiltrada() {
+    const total = filteredSaidas.length;
+    
+    // Calcular filtrados
+    let filtrados = filteredSaidas;
+    
+    if (filtroTabelaLoja) {
+        filtrados = filtrados.filter(s => s.loja === filtroTabelaLoja);
+    }
+    if (filtroTabelaCategoria) {
+        filtrados = filtrados.filter(s => s.categoria === filtroTabelaCategoria);
+    }
+    if (filtroTabelaTipoPagamento) {
+        filtrados = filtrados.filter(s => s.tipo_pagamento === filtroTabelaTipoPagamento);
+    }
+    
+    document.getElementById('contagemTotal').textContent = total;
+    document.getElementById('contagemFiltrada').textContent = filtrados.length;
 }
 
