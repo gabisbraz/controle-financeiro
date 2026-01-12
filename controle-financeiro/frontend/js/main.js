@@ -340,10 +340,7 @@ function renderSaidas() {
                 </span>
             </td>
             <td class="px-4 py-3">
-                <span class="badge badge-${(saida.tipo_pagamento || '')
-                  .toLowerCase()
-                  .normalize("NFD")
-                  .replace(/[\u0300-\u036f]/g, "")}">
+                <span class="badge badge-pix">
                     ${saida.tipo_pagamento || '-'}
                 </span>
             </td>

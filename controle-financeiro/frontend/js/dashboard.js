@@ -283,8 +283,7 @@ function renderTabelaSaidas() {
                 </span>
             </td>
             <td class="px-4 py-3">
-                <span class="badge badge-${getTipoPagamentoClass(s.tipo_pagamento)}">
-                    ${getTipoPagamentoIcon(s.tipo_pagamento)}
+                <span class="badge badge-pix">
                     ${s.tipo_pagamento || '-'}
                 </span>
             </td>
