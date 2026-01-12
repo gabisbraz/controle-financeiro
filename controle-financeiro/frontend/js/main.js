@@ -723,15 +723,7 @@ function carregarTiposPagamentoModal() {
       })
       .catch(err => {
         console.error('Erro ao carregar tipos de pagamento:', err);
-        // Usar tipos padrão em caso de erro
-        tiposPagamento = ['Débito', 'Crédito', 'Pix', 'Dinheiro', 'Transferência'];
-        select.innerHTML =
-          '<option value="">Selecione...</option>' +
-          '<option value="__nova__" class="font-semibold text-purple-600">+ Novo tipo...</option>' +
-          tiposPagamento
-            .map((tipo) => `<option value="${tipo}">${tipo}</option>`)
-            .join("");
-        resolve();
+        
       });
   });
 }
@@ -946,7 +938,6 @@ function carregarTiposPagamentoAPI() {
     .catch(err => {
       console.error('Erro ao carregar tipos de pagamento:', err);
       // Usar tipos padrão em caso de erro
-      tiposPagamento = ['Débito', 'Crédito', 'Pix', 'Dinheiro', 'Transferência'];
       atualizarSelectTipoPagamento();
     });
 }

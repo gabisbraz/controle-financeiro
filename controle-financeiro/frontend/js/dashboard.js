@@ -30,8 +30,9 @@ const colors = {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
-    // Apply active state to 6 months button on page load
-    document.getElementById('btnSemester').classList.add('active');
+    // Apply active state to This Month button on page load
+    currentPeriod = 'month';
+    document.getElementById('btnMonth').classList.add('active');
     
     await loadAllData();
     await loadCartaoMeses(); // Carrega os meses do cartão
@@ -360,32 +361,6 @@ function renderTabelaEntradas() {
             </td>
         </tr>
     `).join('');
-}
-
-// Get CSS class for payment type
-function getTipoPagamentoClass(tipo) {
-    const tipos = {
-        'pix': 'pix',
-        'credito': 'credito',
-        'débito': 'debito',
-        'debito': 'debito',
-        'dinheiro': 'dinheiro',
-        'boleto': 'boleto'
-    };
-    return tipos[tipo?.toLowerCase()] || '';
-}
-
-// Get icon for payment type
-function getTipoPagamentoIcon(tipo) {
-    const icons = {
-        'pix': '<i class="fab fa-pix mr-1"></i>',
-        'credito': '<i class="fas fa-credit-card mr-1"></i>',
-        'débito': '<i class="fas fa-credit-card mr-1"></i>',
-        'debito': '<i class="fas fa-credit-card mr-1"></i>',
-        'dinheiro': '<i class="fas fa-money-bill-wave mr-1"></i>',
-        'boleto': '<i class="fas fa-barcode mr-1"></i>'
-    };
-    return icons[tipo?.toLowerCase()] || '';
 }
 
 // Edit functions
@@ -1120,14 +1095,7 @@ function carregarTiposPagamentoModal() {
             })
             .catch(err => {
                 console.error('Erro ao carregar tipos de pagamento:', err);
-                // Usar tipos padrão em caso de erro
-                tiposPagamento = ['PIX', 'Crédito', 'Débito', 'Dinheiro', 'Boleto'];
-                select.innerHTML =
-                    '<option value="">Selecione...</option>' +
-                    tiposPagamento
-                        .map((tipo) => `<option value="${tipo}">${tipo}</option>`)
-                        .join("");
-                resolve();
+                
             });
     });
 }
