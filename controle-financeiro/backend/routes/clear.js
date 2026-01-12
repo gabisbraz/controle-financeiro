@@ -44,7 +44,7 @@ router.delete('/database/clear', (req, res) => {
       'C&A'
     ];
     lojas.forEach((nome) => {
-      db.run(`INSERT OR IGNORE INTO lojas (nome, ordem) VALUES (?, ?)`, [nome, index + 1]);
+      db.run(`INSERT OR IGNORE INTO lojas (nome) VALUES (?)`, [nome]);
     });
 
     // Popular tipos de pagamento

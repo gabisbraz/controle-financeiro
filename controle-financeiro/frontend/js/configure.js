@@ -960,7 +960,6 @@ function renderizarTabelaLojas(lojas) {
       <tr class="hover:bg-gray-50 transition">
         <td class="px-4 py-3 text-sm text-gray-600">${loja.id}</td>
         <td class="px-4 py-3 text-sm font-medium text-gray-900">${escapeHtml(loja.nome)}</td>
-        <td class="px-4 py-3 text-sm text-gray-600">${loja.ordem}</td>
         <td class="px-4 py-3 text-center">
           <button
             onclick="abrirModalEditar(${loja.id}, '${escapeHtml(loja.nome)}', 'loja')"
