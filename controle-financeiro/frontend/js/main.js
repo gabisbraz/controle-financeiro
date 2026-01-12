@@ -79,11 +79,11 @@ function formatCurrency(value) {
   }).format(value);
 }
 
-// Filter items by data_input (today to today - 15 days)
+// Filter items by data_input (today to today - 30 days)
 function filtrarPorDataRecente(items) {
   const hoje = new Date();
   const limite = new Date();
-  limite.setDate(hoje.getDate() - 15);
+  limite.setDate(hoje.getDate() - 30);  
 
   // Extract YYYY-MM-DD from dates for comparison (avoids timezone issues)
   const hojeStr = hoje.toISOString().split('T')[0];
@@ -239,7 +239,7 @@ async function loadSaidas() {
 
 // Render Entradas table
 function renderEntradas() {
-  // Filter by data_input (last 15 days)
+  // Filter by data_input (last 30 days)
   const entradasRecentes = filtrarPorDataRecente(entradas);
 
   if (entradasRecentes.length === 0) {
@@ -247,7 +247,7 @@ function renderEntradas() {
             <tr>
                 <td colspan="5" class="px-4 py-8 text-center text-gray-500">
                     <i class="fas fa-inbox text-4xl mb-2 block"></i>
-                    <p>Nenhuma entrada registrada nos últimos 15 dias</p>
+                    <p>Nenhuma entrada registrada nos últimos 30 dias</p>
                 </td>
             </tr>
         `;
@@ -305,7 +305,7 @@ function renderEntradas() {
 
 // Render Saídas table
 function renderSaidas() {
-  // Filter by data_input (last 15 days)
+  // Filter by data_input (last 30 days)
   console.log('renderSaidas - Total saidas before filter:', saidas.length);
   const saidasRecentes = filtrarPorDataRecente(saidas);
   console.log('renderSaidas - Saidas after filter:', saidasRecentes.length);
@@ -315,7 +315,7 @@ function renderSaidas() {
             <tr>
                 <td colspan="7" class="px-4 py-8 text-center text-gray-500">
                     <i class="fas fa-inbox text-4xl mb-2 block"></i>
-                    <p>Nenhuma saída registrada nos últimos 15 dias</p>
+                    <p>Nenhuma saída registrada nos últimos 30 dias</p>
                 </td>
             </tr>
         `;
