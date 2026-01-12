@@ -967,6 +967,7 @@ function atualizarSelectTipoPagamento() {
   if (saidaTipoPagamento) {
     saidaTipoPagamento.innerHTML =
       '<option value="">Selecione...</option>' +
+      '<option value="__nova__" class="font-semibold text-purple-600">+ Novo tipo...</option>' +
       tiposPagamento
         .map((tipo) => `<option value="${tipo}">${tipo}</option>`)
         .join("");
@@ -979,6 +980,7 @@ function atualizarSelectsCategorias() {
   if (saidaCategoria) {
     saidaCategoria.innerHTML =
       '<option value="">Selecione...</option>' +
+      '<option value="__nova__" class="font-semibold text-blue-600">+ Nova categoria...</option>' +
       categoriasSaida
         .map((cat) => `<option value="${cat}">${cat}</option>`)
         .join("");
@@ -989,6 +991,7 @@ function atualizarSelectsCategorias() {
   if (entradaCategoria) {
     entradaCategoria.innerHTML =
       '<option value="">Selecione...</option>' +
+      '<option value="__nova__" class="font-semibold text-blue-600">+ Nova categoria...</option>' +
       categoriasEntrada
         .map((cat) => `<option value="${cat}">${cat}</option>`)
         .join("");
@@ -1107,6 +1110,124 @@ function salvarNovaLoja() {
     });
 }
 
+// Modal Nova Categoria functions
+function abrirModalNovaCategoria(tipoCategoria = "entrada") {
+  const modal = document.getElementById("modalNovaCategoria");
+  modal.classList.remove("hidden");
+  modal.classList.add("flex");
+  document.getElementById("inputNovaCategoria").value = "";
+  document.getElementById("novaCategoriaTipo").value = tipoCategoria;
+  document.getElementById("inputNovaCategoria").focus();
+  const msg = document.getElementById("msgNovaCategoria");
+  msg.className = "text-sm font-semibold hidden";
+  msg.textContent = "";
+}
+
+function fecharModalNovaCategoria() {
+  const modal = document.getElementById("modalNovaCategoria");
+  modal.classList.add("hidden");
+  modal.classList.remove("flex");
+}
+
+function salvarNovaCategoria() {
+  const tipo = document.getElementById("novaCategoriaTipo").value;
+  const nome = document.getElementById("inputNovaCategoria").value.trim();
+  const msg = document.getElementById("msgNovaCategoria");
+
+  if (!nome) {
+    msg.textContent = "Digite o nome da categoria";
+    msg.className = "text-sm font-semibold text-red-600";
+    return;
+  }
+
+  const endpoint = tipo === "entrada"
+    ? "http://localhost:3000/categorias/entradas"
+    : "http://localhost:3000/categorias/saidas";
+
+  fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nome }),
+  })
+    .then((res) => {
+      if (!res.ok) {
+        return res.json().then((err) => {
+          throw new Error(err.message || "Erro ao salvar categoria");
+        });
+      }
+      return res.json();
+    })
+    .then((json) => {
+      showToast("Categoria criada com sucesso!");
+      fecharModalNovaCategoria();
+      // Recarregar categorias e atualizar selects
+      if (tipo === "entrada") {
+        carregarCategoriasEntradaAPI();
+      } else {
+        preencherCategorias();
+      }
+    })
+    .catch((err) => {
+      console.error(err);
+      msg.textContent = err.message || "Erro ao salvar categoria";
+      msg.className = "text-sm font-semibold text-red-600";
+    });
+}
+
+// Modal Novo Tipo de Pagamento functions
+function abrirModalNovoTipoPagamento() {
+  const modal = document.getElementById("modalNovoTipoPagamento");
+  modal.classList.remove("hidden");
+  modal.classList.add("flex");
+  document.getElementById("inputNovoTipoPagamento").value = "";
+  document.getElementById("inputNovoTipoPagamento").focus();
+  const msg = document.getElementById("msgNovoTipoPagamento");
+  msg.className = "text-sm font-semibold hidden";
+  msg.textContent = "";
+}
+
+function fecharModalNovoTipoPagamento() {
+  const modal = document.getElementById("modalNovoTipoPagamento");
+  modal.classList.add("hidden");
+  modal.classList.remove("flex");
+}
+
+function salvarNovoTipoPagamento() {
+  const nome = document.getElementById("inputNovoTipoPagamento").value.trim();
+  const msg = document.getElementById("msgNovoTipoPagamento");
+
+  if (!nome) {
+    msg.textContent = "Digite o nome do tipo de pagamento";
+    msg.className = "text-sm font-semibold text-red-600";
+    return;
+  }
+
+  fetch("http://localhost:3000/tipos-pagamento", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nome }),
+  })
+    .then((res) => {
+      if (!res.ok) {
+        return res.json().then((err) => {
+          throw new Error(err.message || "Erro ao salvar tipo de pagamento");
+        });
+      }
+      return res.json();
+    })
+    .then((json) => {
+      showToast("Tipo de pagamento criado com sucesso!");
+      fecharModalNovoTipoPagamento();
+      // Recarregar tipos de pagamento e atualizar selects
+      carregarTiposPagamentoAPI();
+    })
+    .catch((err) => {
+      console.error(err);
+      msg.textContent = err.message || "Erro ao salvar tipo de pagamento";
+      msg.className = "text-sm font-semibold text-red-600";
+    });
+}
+
 // Handle change no select de loja para abrir modal de nova loja
 function handleLojaChange() {
   const saidaLoja = document.getElementById("saidaLoja");
@@ -1124,6 +1245,28 @@ function handleLojaEditChange() {
     abrirModalNovaLoja();
     // Resetar para primeira opção
     editSaidaLoja.value = "";
+  }
+}
+
+// Handle change no select de categoria para abrir modal de nova categoria
+function handleCategoriaChange(e) {
+  const select = e.target;
+  if (select.value === "__nova__") {
+    // Determinar o tipo de categoria baseado no select
+    const tipo = select.id === "saidaCategoria" ? "saida" : "entrada";
+    abrirModalNovaCategoria(tipo);
+    // Resetar para primeira opção
+    select.value = "";
+  }
+}
+
+// Handle change no select de tipo de pagamento para abrir modal de novo tipo
+function handleTipoPagamentoChange() {
+  const saidaTipoPagamento = document.getElementById("saidaTipoPagamento");
+  if (saidaTipoPagamento && saidaTipoPagamento.value === "__nova__") {
+    abrirModalNovoTipoPagamento();
+    // Resetar para primeira opção
+    saidaTipoPagamento.value = "";
   }
 }
 
@@ -1150,19 +1293,19 @@ document.addEventListener("DOMContentLoaded", () => {
   carregarCategoriasEntradaAPI();
   carregarTiposPagamentoAPI();
   carregarLojasAPI();
-  
+
   // Event listener para o select de loja
   const saidaLoja = document.getElementById("saidaLoja");
   if (saidaLoja) {
     saidaLoja.addEventListener("change", handleLojaChange);
   }
-  
+
   // Event listener para o select de loja do modal de edição
   const editSaidaLoja = document.getElementById("editSaidaLoja");
   if (editSaidaLoja) {
     editSaidaLoja.addEventListener("change", handleLojaEditChange);
   }
-  
+
   // Event listener para o formulário de nova loja
   const formNovaLoja = document.getElementById("formNovaLoja");
   if (formNovaLoja) {
@@ -1171,14 +1314,46 @@ document.addEventListener("DOMContentLoaded", () => {
       salvarNovaLoja();
     });
   }
-  
+
+  // Event listeners para nova categoria
+  const entradaCategoria = document.getElementById("entradaCategoria");
+  if (entradaCategoria) {
+    entradaCategoria.addEventListener("change", handleCategoriaChange);
+  }
+
+  const saidaCategoria = document.getElementById("saidaCategoria");
+  if (saidaCategoria) {
+    saidaCategoria.addEventListener("change", handleCategoriaChange);
+  }
+
+  const formNovaCategoria = document.getElementById("formNovaCategoria");
+  if (formNovaCategoria) {
+    formNovaCategoria.addEventListener("submit", (e) => {
+      e.preventDefault();
+      salvarNovaCategoria();
+    });
+  }
+
+  // Event listeners para novo tipo de pagamento
+  const saidaTipoPagamento = document.getElementById("saidaTipoPagamento");
+  if (saidaTipoPagamento) {
+    saidaTipoPagamento.addEventListener("change", handleTipoPagamentoChange);
+  }
+
+  const formNovoTipoPagamento = document.getElementById("formNovoTipoPagamento");
+  if (formNovoTipoPagamento) {
+    formNovoTipoPagamento.addEventListener("submit", (e) => {
+      e.preventDefault();
+      salvarNovoTipoPagamento();
+    });
+  }
+
   // Adicionar event listeners para cálculo automático de parcelas
   const saidaValor = document.getElementById("saidaValor");
   const saidaParcelas = document.getElementById("saidaParcelas");
   const saidaValorParcela = document.getElementById("saidaValorParcela");
-  const saidaTipoPagamento = document.getElementById("saidaTipoPagamento");
   const camposParcelamento = document.getElementById("camposParcelamento");
-  
+
   if (saidaValor && saidaParcelas && saidaValorParcela) {
     function calcularParcela() {
       const valor = parseFloat(saidaValor.value) || 0;
@@ -1190,11 +1365,11 @@ document.addEventListener("DOMContentLoaded", () => {
         saidaValorParcela.value = "";
       }
     }
-    
+
     saidaValor.addEventListener("input", calcularParcela);
     saidaParcelas.addEventListener("change", calcularParcela);
   }
-  
+
   // Mostrar/ocultar campos de parcelamento baseado no tipo de pagamento
   if (saidaTipoPagamento && camposParcelamento) {
     function toggleParcelamento() {
@@ -1211,7 +1386,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
     }
-    
+
     saidaTipoPagamento.addEventListener("change", toggleParcelamento);
   }
 });

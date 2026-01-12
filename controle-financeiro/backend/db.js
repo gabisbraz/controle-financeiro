@@ -52,30 +52,6 @@ db.serialize(() => {
       data_criacao TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `);
-
-  // Inserir categorias padrão se a tabela estiver vazia
-  db.get('SELECT COUNT(*) as count FROM categorias_saidas', (err, row) => {
-    if (row.count === 0) {
-      const categoriasDefault = [
-        'Transporte',
-        'Alimentação',
-        'Autocuidado',
-        'Moradia',
-        'Saúde',
-        'Educação',
-        'Lazer',
-        'Vestuário',
-        'MG',
-        'Outros'
-      ];
-      const stmt = db.prepare('INSERT INTO categorias_saidas (nome, ordem) VALUES (?, ?)');
-      categoriasDefault.forEach((cat, index) => {
-        stmt.run(cat, index);
-      });
-      stmt.finalize();
-    }
-  });
-
   // Adicionar colunas de parcelamento e referências se não existirem
   db.run(`ALTER TABLE entradas ADD COLUMN data_input TEXT`, (err) => {
     // Ignorar erro se a coluna já existir
@@ -116,24 +92,6 @@ db.serialize(() => {
     )
   `);
 
-  // Inserir tipos de pagamento padrão se a tabela estiver vazia
-  db.get('SELECT COUNT(*) as count FROM tipos_pagamento', (err, row) => {
-    if (row.count === 0) {
-      const tiposDefault = [
-        'Débito',
-        'Crédito',
-        'Pix',
-        'Dinheiro',
-        'Transferência'
-      ];
-      const stmt = db.prepare('INSERT INTO tipos_pagamento (nome, ordem) VALUES (?, ?)');
-      tiposDefault.forEach((tipo, index) => {
-        stmt.run(tipo, index);
-      });
-      stmt.finalize();
-    }
-  });
-
   // Tabela de categorias de entradas
   db.run(`
     CREATE TABLE IF NOT EXISTS categorias_entradas (
@@ -145,26 +103,6 @@ db.serialize(() => {
     )
   `);
 
-  // Inserir categorias de entrada padrão se a tabela estiver vazia
-  db.get('SELECT COUNT(*) as count FROM categorias_entradas', (err, row) => {
-    if (row.count === 0) {
-      const categoriasDefault = [
-        'Salário',
-        '13º Salário',
-        'Bônus',
-        'Pagamento',
-        'Freelance',
-        'Investimentos',
-        'Outros'
-      ];
-      const stmt = db.prepare('INSERT INTO categorias_entradas (nome, ordem) VALUES (?, ?)');
-      categoriasDefault.forEach((cat, index) => {
-        stmt.run(cat, index);
-      });
-      stmt.finalize();
-    }
-  });
-
   // Tabela de lojas
   db.run(`
     CREATE TABLE IF NOT EXISTS lojas (
@@ -175,27 +113,6 @@ db.serialize(() => {
     )
   `);
 
-  // Inserir lojas padrão se a tabela estiver vazia
-  db.get('SELECT COUNT(*) as count FROM lojas', (err, row) => {
-    if (row.count === 0) {
-      const lojasDefault = [
-        'Mercado',
-        'Restaurante',
-        'Posto de Gasolina',
-        'Farmácia',
-        'Loja de Roupas',
-        'Uber',
-        'Netflix',
-        'Amazon',
-        'Outros'
-      ];
-      const stmt = db.prepare('INSERT INTO lojas (nome) VALUES (?)');
-      lojasDefault.forEach((loja) => {
-        stmt.run(loja);
-      });
-      stmt.finalize();
-    }
-  });
 });
 
 module.exports = db;
