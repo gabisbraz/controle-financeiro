@@ -44,7 +44,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     toggleMonthlyCharts();
     
     await loadAllData();
-    await carregarCategoriasEntrada(); // Carregar categorias de entrada do banco de dados
     await carregarDiaVencimentoCartao(); // Carregar dia de vencimento do cartão
     inicializarTabelaGastosCartao(); // Inicializar tabela de gastos do cartão com a fatura atual
     initCharts();
@@ -233,18 +232,13 @@ function applyFilter(customStart = null, customEnd = null) {
                 startDate = new Date(now.getFullYear(), now.getMonth(), 1);
                 endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
                 break;
-            case 'quarter':
-                // Trimestre móvel: mês atual + 2 meses anteriores
-                startDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+            case 'last12months':
+                startDate = new Date(now.getFullYear(), now.getMonth() - 11, 1);
                 endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
                 break;
-            case 'semester':
-                startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
-                endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-                break;
-            case 'year':
-                startDate = new Date(now.getFullYear(), 0, 1);
-                endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+            case 'next12months':
+                startDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+                endDate = new Date(now.getFullYear(), now.getMonth() + 12, 0, 23, 59, 59);
                 break;
             default: // 'all'
                 filteredEntradas = [...entradas];
