@@ -1380,14 +1380,24 @@ function getCartaoCreditoData() {
         // Get billing period for this month
         const periodo = getPeriodoFatura(year, month, diaVencimentoCartao);
         
-        // Calculate total for this billing period
-        let total = 0;
+        // Calculate total for this billing period (subtracting reimbursements)
+        let totalSemReembolso = 0;
+        let totalReembolso = 0;
+        
         creditoSaidas.forEach(s => {
             const date = new Date(s.data + 'T00:00:00');
             if (date >= periodo.inicio && date <= periodo.fim) {
-                total += parseFloat(s.valor) || 0;
+                const valor = parseFloat(s.valor) || 0;
+                if (s.categoria === 'Reembolso') {
+                    totalReembolso += valor;
+                } else {
+                    totalSemReembolso += valor;
+                }
             }
         });
+        
+        // Total final = gastos normais - reembolsos
+        const total = totalSemReembolso - totalReembolso;
         
         // Format label
         const label = `${monthNames[month]}/${year.toString().slice(2)} - Fatura`;

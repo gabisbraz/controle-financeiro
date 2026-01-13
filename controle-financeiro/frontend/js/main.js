@@ -347,7 +347,7 @@ function renderSaidas() {
             <td class="px-4 py-3 text-sm text-gray-600">
                 ${saida.parcelas > 1 ? `${saida.parcela_atual}/${saida.parcelas}` : '-'}
             </td>
-            <td class="px-4 py-3 text-right valor-negativo">${formatCurrency(
+            <td class="px-4 py-3 text-right ${saida.categoria === 'Reembolso' ? 'valor-positivo' : 'valor-negativo'}">${formatCurrency(
               saida.valor
             )}</td>
             <td class="px-4 py-3 text-center">
