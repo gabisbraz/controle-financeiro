@@ -335,8 +335,31 @@ function renderTabelaSaidas() {
         return;
     }
     
-    // Calcular total dos valores filtrados
-    const totalFiltrado = dadosFiltrados.reduce((sum, s) => sum + (parseFloat(s.valor) || 0), 0);
+    // Calcular total subtraindo reembolsos APENAS quando filtro de crédito está ativo
+    const isCreditoFilter = filtroTabelaTipoPagamento && 
+        (filtroTabelaTipoPagamento.toLowerCase().includes('credito') || filtroTabelaTipoPagamento.toLowerCase().includes('crédito'));
+    
+    let totalFiltrado;
+    
+    if (isCreditoFilter) {
+        // Se filtro de crédito está ativo: subtrair reembolsos do total
+        let totalSemReembolso = 0;
+        let totalReembolso = 0;
+        
+        dadosFiltrados.forEach(s => {
+            const valor = parseFloat(s.valor) || 0;
+            if (s.categoria === 'Reembolso') {
+                totalReembolso += valor;
+            } else {
+                totalSemReembolso += valor;
+            }
+        });
+        
+        totalFiltrado = totalSemReembolso - totalReembolso;
+    } else {
+        // Caso contrário: somar normalmente (incluindo reembolsos como positivo)
+        totalFiltrado = dadosFiltrados.reduce((sum, s) => sum + (parseFloat(s.valor) || 0), 0);
+    }
     
     // Atualizar footer com o total
     if (footer && footerTotal) {
@@ -1029,9 +1052,28 @@ function mostrarTabelaGastosCartao(gastos, label, anoFat, mesFat) {
                 </td>
             </tr>
         `;
+        
+        // Ocultar footer quando não há dados
+        const footer = document.getElementById('tabelaGastosCartaoFooter');
+        if (footer) {
+            footer.classList.add('hidden');
+        }
     } else {
-        // Calcular total
-        const total = gastos.reduce((sum, g) => sum + (parseFloat(g.valor) || 0), 0);
+        // Calcular total subtraindo reembolsos (reembolsos são subtraídos do total)
+        let totalSemReembolso = 0;
+        let totalReembolso = 0;
+        
+        gastos.forEach(g => {
+            const valor = parseFloat(g.valor) || 0;
+            if (g.categoria === 'Reembolso') {
+                totalReembolso += valor;
+            } else {
+                totalSemReembolso += valor;
+            }
+        });
+        
+        // Total final = gastos normais - reembolsos
+        const totalFinal = totalSemReembolso - totalReembolso;
         
         // Renderizar tabela
         const sortedGastos = [...gastos].sort((a, b) => new Date(b.data) - new Date(a.data));
@@ -1072,11 +1114,11 @@ function mostrarTabelaGastosCartao(gastos, label, anoFat, mesFat) {
             </tr>
             `}).join('');
         
-        // Adicionar linha de total no footer
+        // Adicionar linha de total no footer (subtraindo reembolsos)
         const footer = document.getElementById('tabelaGastosCartaoFooter');
         if (footer) {
             const footerTotal = document.getElementById('totalGastosCartaoFooter');
-            footerTotal.textContent = `- ${formatCurrency(total)}`;
+            footerTotal.textContent = `- ${formatCurrency(totalFinal)}`;
             footer.classList.remove('hidden');
         }
     }
