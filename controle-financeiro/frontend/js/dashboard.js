@@ -347,7 +347,9 @@ function renderTabelaSaidas() {
     // Sort by date descending
     const sortedSaidas = [...dadosFiltrados].sort((a, b) => new Date(b.data) - new Date(a.data));
     
-    tbody.innerHTML = sortedSaidas.map(s => `
+    tbody.innerHTML = sortedSaidas.map(s => {
+        const isReembolso = s.categoria === 'Reembolso';
+        return `
         <tr class="hover:bg-gray-50 transition">
             <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">${formatDate(s.data)}</td>
             <td class="px-4 py-3 text-sm text-gray-900">${s.descricao || '-'}</td>
@@ -361,8 +363,8 @@ function renderTabelaSaidas() {
                     : '<span class="text-gray-400">-</span>'}
             </td>
             <td class="px-4 py-3">
-                <span class="badge-categoria">
-                    <i class="fas fa-tag text-red-500"></i>
+                <span class="badge-categoria ${isReembolso ? 'reembolso' : ''}">
+                    <i class="fas fa-tag ${isReembolso ? 'text-emerald-500' : 'text-red-500'}"></i>
                     ${s.categoria}
                 </span>
             </td>
@@ -371,8 +373,8 @@ function renderTabelaSaidas() {
                     ${s.tipo_pagamento || '-'}
                 </span>
             </td>
-            <td class="px-4 py-3 text-right font-semibold text-red-600 whitespace-nowrap">
-                - ${formatCurrency(s.valor)}
+            <td class="px-4 py-3 text-right font-semibold ${isReembolso ? 'text-emerald-600' : 'text-red-600'} whitespace-nowrap">
+                ${isReembolso ? '+ ' : '- '}${formatCurrency(s.valor)}
             </td>
             <td class="px-4 py-3 text-center">
                 <button 
@@ -391,7 +393,7 @@ function renderTabelaSaidas() {
                 </button>
             </td>
         </tr>
-    `).join('');
+    `}).join('');
 }
 
 // Render tabela de entradas
@@ -1034,7 +1036,9 @@ function mostrarTabelaGastosCartao(gastos, label, anoFat, mesFat) {
         // Renderizar tabela
         const sortedGastos = [...gastos].sort((a, b) => new Date(b.data) - new Date(a.data));
         
-        tableBody.innerHTML = sortedGastos.map(g => `
+        tableBody.innerHTML = sortedGastos.map(g => {
+            const isReembolso = g.categoria === 'Reembolso';
+            return `
             <tr class="hover:bg-gray-50 transition">
                 <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">${formatDate(g.data)}</td>
                 <td class="px-4 py-3 text-sm text-gray-900">${g.descricao || '-'}</td>
@@ -1048,13 +1052,13 @@ function mostrarTabelaGastosCartao(gastos, label, anoFat, mesFat) {
                         : '<span class="text-gray-400">-</span>'}
                 </td>
                 <td class="px-4 py-3">
-                    <span class="badge-categoria">
-                        <i class="fas fa-tag text-red-500"></i>
+                    <span class="badge-categoria ${isReembolso ? 'reembolso' : ''}">
+                        <i class="fas fa-tag ${isReembolso ? 'text-emerald-500' : 'text-red-500'}"></i>
                         ${g.categoria}
                     </span>
                 </td>
-                <td class="px-4 py-3 text-right font-semibold text-red-600 whitespace-nowrap">
-                    - ${formatCurrency(g.valor)}
+                <td class="px-4 py-3 text-right font-semibold ${isReembolso ? 'text-emerald-600' : 'text-red-600'} whitespace-nowrap">
+                    ${isReembolso ? '+ ' : '- '}${formatCurrency(g.valor)}
                 </td>
                 <td class="px-4 py-3 text-center">
                     <button 
@@ -1066,7 +1070,7 @@ function mostrarTabelaGastosCartao(gastos, label, anoFat, mesFat) {
                     </button>
                 </td>
             </tr>
-        `).join('');
+            `}).join('');
         
         // Adicionar linha de total no footer
         const footer = document.getElementById('tabelaGastosCartaoFooter');

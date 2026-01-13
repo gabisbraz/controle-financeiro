@@ -129,6 +129,12 @@ tbody tr:hover {
     color: #374151;
 }
 
+/* Category badge for Reembolso */
+.badge-categoria.reembolso {
+    background-color: #f3f4f6;
+    color: #059669;
+}
+
 /* Delete button */
 .btn-delete {
     color: #ef4444;
