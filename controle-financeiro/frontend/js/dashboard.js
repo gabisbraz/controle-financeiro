@@ -46,6 +46,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadAllData();
     await carregarCategoriasEntrada(); // Carregar categorias de entrada do banco de dados
     await carregarDiaVencimentoCartao(); // Carregar dia de vencimento do cartão
+    inicializarTabelaGastosCartao(); // Inicializar tabela de gastos do cartão com a fatura atual
     initCharts();
     updateDashboard();
     
@@ -183,6 +184,16 @@ function toggleMonthlyCharts() {
             cartaoCreditoContainer.classList.remove('hidden');
         } else {
             cartaoCreditoContainer.classList.add('hidden');
+        }
+    }
+    
+    // Toggle Tabela de Gastos Cartão Crédito (visible only in 'month' period)
+    const tabelaGastosCartaoContainer = document.getElementById('tabelaGastosCartaoContainer');
+    if (tabelaGastosCartaoContainer) {
+        if (currentPeriod === 'month') {
+            tabelaGastosCartaoContainer.classList.remove('hidden');
+        } else {
+            tabelaGastosCartaoContainer.classList.add('hidden');
         }
     }
 }
@@ -1079,6 +1090,63 @@ function fecharTabelaGastosCartao() {
     if (container) {
         container.classList.add('hidden');
     }
+}
+
+// Inicializar tabela de gastos do cartão de crédito com o período atual (fatura atual)
+function inicializarTabelaGastosCartao() {
+    const now = new Date();
+    const today = now.getDate();
+    const dueDay = diaVencimentoCartao;
+    
+    // Determinar o ponto de partida para os períodos de fatura (mesmo usado no gráfico)
+    let startMonth = now.getMonth();
+    let startYear = now.getFullYear();
+    
+    if (today < dueDay) {
+        startMonth = now.getMonth() - 1;
+        if (startMonth < 0) {
+            startMonth = 11;
+            startYear = now.getFullYear() - 1;
+        }
+    }
+    
+    const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    
+    // Encontrar o período de fatura atual (a barra com cor diferente no gráfico)
+    let faturaMonth, faturaYear, faturaLabel;
+    
+    for (let i = 0; i < 12; i++) {
+        let month = startMonth + i;
+        let year = startYear;
+        
+        if (month > 11) {
+            month = month - 12;
+            year = startYear + Math.floor((startMonth + i) / 12);
+        }
+        
+        const periodo = getPeriodoFatura(year, month, diaVencimentoCartao);
+        
+        // Verificar se hoje cai dentro deste período de fatura
+        if (now >= periodo.inicio && now <= periodo.fim) {
+            faturaMonth = month;
+            faturaYear = year;
+            faturaLabel = `${monthNames[month]}/${year.toString().slice(2)} - Fatura`;
+            break;
+        }
+    }
+    
+    // Se não encontrou (caso edge), usar o primeiro período
+    if (faturaMonth === undefined) {
+        faturaMonth = startMonth;
+        faturaYear = startYear;
+        faturaLabel = `${monthNames[startMonth]}/${startYear.toString().slice(2)} - Fatura`;
+    }
+    
+    // Obter gastos para esta fatura
+    const gastos = getGastosCartaoCreditoPorFatura(faturaYear, faturaMonth);
+    
+    // Display the table with current billing period expenses
+    mostrarTabelaGastosCartao(gastos, faturaLabel, faturaYear, faturaMonth);
 }
 
 // Update all charts with filtered data
