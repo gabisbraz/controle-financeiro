@@ -159,28 +159,55 @@ router.post('/import/entradas', async (req, res) => {
 // Export Excel completo
 router.get('/export/excel', (req, res) => {
   db.serialize(() => {
-    db.all('SELECT * FROM saidas ORDER BY data DESC', [], (err, saidas) => {
-      if (err) return res.status(500).json({ message: 'Erro ao buscar saídas' });
+    // Query corrigida com JOINs para buscar os nomes das referências
+    const querySaidas = `
+      SELECT 
+        l.nome as loja,
+        cs.nome as categoria,
+        tp.nome as tipo_pagamento,
+        s.descricao,
+        s.valor,
+        s.data
+      FROM saidas s
+      LEFT JOIN lojas l ON s.loja_id = l.id
+      LEFT JOIN categorias_saidas cs ON s.categoria_id = cs.id
+      LEFT JOIN tipos_pagamento tp ON s.tipo_pagamento_id = tp.id
+      ORDER BY s.data DESC
+    `;
+    
+    const queryEntradas = `
+      SELECT 
+        ce.nome as categoria,
+        e.descricao,
+        e.valor,
+        e.data
+      FROM entradas e
+      LEFT JOIN categorias_entradas ce ON e.categoria_id = ce.id
+      ORDER BY e.data DESC
+    `;
 
-      db.all('SELECT * FROM entradas ORDER BY data DESC', [], (err2, entradas) => {
-        if (err2) return res.status(500).json({ message: 'Erro ao buscar entradas' });
+    db.all(querySaidas, [], (err, saidas) => {
+      if (err) return res.status(500).json({ message: 'Erro ao buscar saídas', error: err.message });
+
+      db.all(queryEntradas, [], (err2, entradas) => {
+        if (err2) return res.status(500).json({ message: 'Erro ao buscar entradas', error: err2.message });
 
         // Formatar saídas com as mesmas colunas do import
         const saidasFormatadas = saidas.map(saida => ({
-          'Loja': saida.loja,
-          'Descrição': saida.descricao,
-          'Categoria': saida.categoria,
-          'Data da compra': saida.data,
-          'Tipo pagamento': saida.tipo_pagamento,
-          'Valor': saida.valor
+          'Loja': saida.loja || '',
+          'Descrição': saida.descricao || '',
+          'Categoria': saida.categoria || '',
+          'Data da compra': saida.data || '',
+          'Tipo pagamento': saida.tipo_pagamento || '',
+          'Valor': saida.valor || 0
         }));
 
         // Formatar entradas com as mesmas colunas do import
         const entradasFormatadas = entradas.map(entrada => ({
-          'Nome': entrada.descricao,
-          'Categoria': entrada.categoria,
-          'Data da entrada': entrada.data,
-          'Valor': entrada.valor
+          'Nome': entrada.descricao || '',
+          'Categoria': entrada.categoria || '',
+          'Data da entrada': entrada.data || '',
+          'Valor': entrada.valor || 0
         }));
 
         const wb = XLSX.utils.book_new();

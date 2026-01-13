@@ -1033,6 +1033,9 @@ function getTopLojas(limit = 10) {
     const grouped = {};
     
     filteredSaidas.forEach(s => {
+        // Ignorar entradas onde a loja é "-"
+        if (s.loja === '-') return;
+        
         const key = s.loja || 'Outros';
         grouped[key] = (grouped[key] || 0) + (parseFloat(s.valor) || 0);
     });
@@ -1054,8 +1057,9 @@ function getCartaoCreditoData() {
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth(); // 0-11
     
-    // Filter only credit card expenses
-    const creditoSaidas = filteredSaidas.filter(s => {
+    // Filter only credit card expenses from ALL data (not filtered by period)
+    // This ensures we show all installments including future ones
+    const creditoSaidas = saidas.filter(s => {
         const tipo = (s.tipo_pagamento || '').toLowerCase();
         return tipo.includes('credito') || tipo === 'crédito' || tipo === 'cartao';
     });

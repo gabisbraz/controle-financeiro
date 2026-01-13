@@ -1,6 +1,8 @@
 const express = require('express');
 const db = require('../db');
-const router = express.Router();
+const { getOrCreateCategoriaEntrada } = require('../helpers');
+
+router = express.Router();
 
 // GET entradas
 router.get('/', (req, res) => {
@@ -10,13 +12,16 @@ router.get('/', (req, res) => {
 });
 
 // POST entrada
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const { categoria, descricao, valor, data } = req.body;
   const data_input = new Date().toISOString();
   
+  // Obter ou criar o ID da categoria
+  const categoriaId = await getOrCreateCategoriaEntrada(categoria);
+  
   db.run(
-    `INSERT INTO entradas (categoria, descricao, valor, data, data_input) VALUES (?, ?, ?, ?, ?)`,
-    [categoria, descricao, valor, data, data_input],
+    `INSERT INTO entradas (categoria, categoria_id, descricao, valor, data, data_input) VALUES (?, ?, ?, ?, ?, ?)`,
+    [categoria, categoriaId, descricao, valor, data, data_input],
     function () {
       res.status(201).json({ id: this.lastID });
     }
@@ -24,13 +29,16 @@ router.post('/', (req, res) => {
 });
 
 // PUT entrada
-router.put('/:id', (req, res) => {
+router.put('/:id', async (req, res) => {
   const { categoria, descricao, valor, data } = req.body;
   const { id } = req.params;
+  
+  // Obter ou criar o ID da categoria
+  const categoriaId = await getOrCreateCategoriaEntrada(categoria);
 
   db.run(
-    `UPDATE entradas SET categoria = ?, descricao = ?, valor = ?, data = ? WHERE id = ?`,
-    [categoria, descricao, valor, data, id],
+    `UPDATE entradas SET categoria = ?, categoria_id = ?, descricao = ?, valor = ?, data = ? WHERE id = ?`,
+    [categoria, categoriaId, descricao, valor, data, id],
     function (err) {
       if (err) return res.status(500).json({ message: 'Erro ao atualizar entrada' });
       res.json({ message: 'Entrada atualizada com sucesso' });

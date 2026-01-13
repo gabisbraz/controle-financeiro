@@ -95,6 +95,15 @@ db.serialize(() => {
     // Ignorar erro se a coluna já existir
   });
 
+  // Migração para популяр existing entradas with categoria_id
+  db.run(`
+    UPDATE entradas 
+    SET categoria_id = (
+      SELECT id FROM categorias_entradas WHERE nome = entradas.categoria
+    )
+    WHERE categoria_id IS NULL AND categoria IS NOT NULL
+  `);
+
   // Tabela de tipos de pagamento
   db.run(`
     CREATE TABLE IF NOT EXISTS tipos_pagamento (
