@@ -10,6 +10,14 @@ router.get('/', (req, res) => {
   });
 });
 
+// GET obter o primeiro cartão (para seleção padrão)
+router.get('/first', (req, res) => {
+  db.get('SELECT * FROM cartao_fatura ORDER BY id LIMIT 1', [], (err, row) => {
+    if (err) return res.status(500).json({ message: 'Erro ao buscar cartão' });
+    res.json({ data: row || null });
+  });
+});
+
 // POST criar novo cartão
 router.post('/', (req, res) => {
   const { nome_cartao, dia_vencimento } = req.body;

@@ -151,9 +151,27 @@ router.get('/export/excel', (req, res) => {
       db.all('SELECT * FROM entradas ORDER BY data DESC', [], (err2, entradas) => {
         if (err2) return res.status(500).json({ message: 'Erro ao buscar entradas' });
 
+        // Formatar saídas com as mesmas colunas do import
+        const saidasFormatadas = saidas.map(saida => ({
+          'Loja': saida.loja,
+          'Descrição': saida.descricao,
+          'Categoria': saida.categoria,
+          'Data da compra': saida.data,
+          'Tipo pagamento': saida.tipo_pagamento,
+          'Valor': saida.valor
+        }));
+
+        // Formatar entradas com as mesmas colunas do import
+        const entradasFormatadas = entradas.map(entrada => ({
+          'Nome': entrada.descricao,
+          'Categoria': entrada.categoria,
+          'Data da entrada': entrada.data,
+          'Valor': entrada.valor
+        }));
+
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(saidas), 'Saídas');
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(entradas), 'Entradas');
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(saidasFormatadas), 'Saídas');
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(entradasFormatadas), 'Entradas');
 
         const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
 

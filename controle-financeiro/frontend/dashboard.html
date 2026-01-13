@@ -240,8 +240,11 @@
                             <select id="filtroTipoPagamento" class="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500" onchange="aplicarFiltrosTabela()">
                                 <option value="">Todos os Tipos de Pgto</option>
                             </select>
-                            <select id="filtroFatura" class="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500" onchange="aplicarFiltrosTabela()">
+                        <select id="filtroFatura" class="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500" onchange="aplicarFiltrosTabela()">
                                 <option value="">Todas as Faturas</option>
+                            </select>
+                            <select id="filtroCartao" class="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 hidden" onchange="aplicarFiltrosTabela()">
+                                <option value="">Selecione o cartão...</option>
                             </select>
                         </div>
                         <button onclick="limparFiltrosTabela()" class="ml-auto px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm transition flex items-center gap-2">
