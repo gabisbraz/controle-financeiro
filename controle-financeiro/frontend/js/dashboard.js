@@ -10,20 +10,17 @@ let filteredSaidas = [];
 let currentPeriod = 'semester';
 let charts = {};
 let deleteTarget = { type: null, id: null };
+let diaVencimentoCartao = 24; // Dia de vencimento padrão do cartão
 
 // Dados para os selects do modal de edição
 let categoriasSaida = [];
 let tiposPagamento = [];
 let lojas = [];
 
-// Cartões cadastrados
-let cartoes = [];
-
 // Filtros dinâmicos da tabela de saídas
 let filtroTabelaLoja = '';
 let filtroTabelaCategoria = '';
 let filtroTabelaTipoPagamento = '';
-let filtroTabelaFatura = '';
 
 // Colors for charts
 const colors = {
@@ -47,8 +44,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     toggleMonthlyCharts();
     
     await loadAllData();
-    await loadCartaoMeses(); // Carrega os meses do cartão
     await carregarCategoriasEntrada(); // Carregar categorias de entrada do banco de dados
+    await carregarDiaVencimentoCartao(); // Carregar dia de vencimento do cartão
     initCharts();
     updateDashboard();
     
@@ -296,7 +293,7 @@ function updateTables() {
 }
 
 // Render tabela de saídas
-function renderTabelaSaidas(filtroFatura = '', filtroCartaoId = '') {
+function renderTabelaSaidas() {
     const tbody = document.getElementById('tabelaSaidas');
     const footer = document.getElementById('tabelaSaidasFooter');
     const footerTotal = document.getElementById('totalSaidasFooter');
@@ -312,48 +309,6 @@ function renderTabelaSaidas(filtroFatura = '', filtroCartaoId = '') {
     }
     if (filtroTabelaTipoPagamento) {
         dadosFiltrados = dadosFiltrados.filter(s => s.tipo_pagamento === filtroTabelaTipoPagamento);
-    }
-    if (filtroFatura && filtroCartaoId) {
-        // Filtrar por mês de fatura E cartão selecionado (considerando dia de vencimento)
-        const cartao = cartoes.find(c => c.id == filtroCartaoId);
-        const diaVencimento = cartao ? parseInt(cartao.dia_vencimento) : 10;
-        
-        // Converter filtroFatura (YYYY-MM) para determinar o período da fatura
-        const [year, month] = filtroFatura.split('-');
-        const selectedYear = parseInt(year);
-        const selectedMonth = parseInt(month) - 1; // 0-indexed
-        
-        // O período da fatura vai do dia após o vencimento até o dia do vencimento do mês seguinte
-        const startDate = new Date(selectedYear, selectedMonth, diaVencimento + 1);
-        const endDate = new Date(selectedYear, selectedMonth + 1, diaVencimento);
-        
-        dadosFiltrados = dadosFiltrados.filter(s => {
-            // Verificar se é pagamento com cartão de crédito
-            const tipo = (s.tipo_pagamento || '').toLowerCase();
-            const isCredito = tipo.includes('credito') || tipo === 'crédito' || tipo === 'cartao';
-            
-            if (!isCredito) return false;
-            
-            // Verificar se a data está no período da fatura do cartão
-            if (s.data) {
-                const date = new Date(s.data + 'T00:00:00');
-                return date >= startDate && date <= endDate;
-            }
-            return false;
-        });
-    } else if (filtroFatura) {
-        // Filtrar apenas por mês (comportamento anterior)
-        dadosFiltrados = dadosFiltrados.filter(s => {
-            const tipo = (s.tipo_pagamento || '').toLowerCase();
-            const isCredito = tipo.includes('credito') || tipo === 'crédito' || tipo === 'cartao';
-            
-            if (!isCredito) return false;
-            
-            if (s.data && s.data.startsWith(filtroFatura)) {
-                return true;
-            }
-            return false;
-        });
     }
     
     if (dadosFiltrados.length === 0) {
@@ -898,6 +853,7 @@ function initCharts() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            onClick: handleCartaoCreditoClick,
             plugins: {
                 legend: {
                     display: false
@@ -918,6 +874,211 @@ function initCharts() {
             }
         }
     });
+}
+
+// Handler de clique no gráfico de Comprometimento Cartão Crédito
+function handleCartaoCreditoClick(event, elements) {
+    if (elements.length === 0) return;
+    
+    const index = elements[0].index;
+    const chart = charts.cartaoCredito;
+    const label = chart.data.labels[index];
+    const value = chart.data.datasets[0].data[index];
+    
+    // Apenas mostrar se houver gastos
+    if (value === 0) return;
+    
+    // Extrair ano e mês do label (ex: "Jan/25 - Fatura" -> 2025, 0)
+    // Formato: "Jan/25 - Fatura"
+    const match = label.match(/^([A-Za-zéê]+)\/(\d{2})/);
+    if (!match) return;
+    
+    const monthName = match[1];
+    const yearShort = match[2];
+    const year = 2000 + parseInt(yearShort);
+    const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const monthIndex = monthNames.findIndex(m => m.toLowerCase() === monthName.toLowerCase());
+    
+    if (monthIndex === -1) return;
+    
+    // Obter gastos do cartão para esta fatura
+    const gastos = getGastosCartaoCreditoPorFatura(year, monthIndex);
+    
+    // Mostrar tabela
+    mostrarTabelaGastosCartao(gastos, label, year, monthIndex);
+}
+
+// Carregar dia de vencimento do cartão de crédito
+async function carregarDiaVencimentoCartao() {
+    try {
+        const response = await fetch('http://localhost:3000/cartao/first');
+        if (!response.ok) throw new Error('Erro ao carregar cartão');
+        
+        const result = await response.json();
+        if (result.data && result.data.dia_vencimento) {
+            diaVencimentoCartao = result.data.dia_vencimento;
+            console.log(`Dia de vencimento do cartão: ${diaVencimentoCartao}`);
+        }
+    } catch (error) {
+        console.error('Erro ao carregar dia de vencimento:', error);
+        // Mantém o valor padrão de 24
+    }
+}
+
+// Obter data de início e fim do período de fatura
+function getPeriodoFatura(ano, mes, diaVencimento) {
+    // A fatura do mês atual vence no dia X, então:
+    // Início: dia X do mês anterior + 1
+    // Fim: dia X do mês atual
+    
+    // Calcular início (dia X do mês anterior)
+    let mesInicio = mes - 1;
+    let anoInicio = ano;
+    if (mesInicio < 0) {
+        mesInicio = 11;
+        anoInicio = ano - 1;
+    }
+    // Obter último dia do mês de início para ajustar
+    const diasNoMesInicio = new Date(anoInicio, mesInicio + 1, 0).getDate();
+    const diaInicioReal = Math.min(diaVencimento, diasNoMesInicio);
+    const dataInicio = new Date(anoInicio, mesInicio, diaInicioReal);
+    
+    // Ajustar: início é dia X+1 do mês anterior
+    const dataInicioFatura = new Date(anoInicio, mesInicio, diaInicioReal + 1);
+    
+    // Calcular fim (dia X do mês atual)
+    const diasNoMesFim = new Date(ano, mes + 1, 0).getDate();
+    const diaFimReal = Math.min(diaVencimento, diasNoMesFim);
+    const dataFimFatura = new Date(ano, mes, diaFimReal, 23, 59, 59);
+    
+    return {
+        inicio: dataInicioFatura,
+        fim: dataFimFatura,
+        mesFatura: mes,
+        anoFatura: ano
+    };
+}
+
+// Obter gastos de cartão de crédito para uma fatura específica (por período)
+function getGastosCartaoCreditoPorFatura(ano, mes) {
+    // Filtrar saídas por cartão de crédito
+    const creditoSaidas = saidas.filter(s => {
+        const tipo = (s.tipo_pagamento || '').toLowerCase();
+        return tipo.includes('credito') || tipo === 'crédito' || tipo === 'cartao';
+    });
+    
+    // Obter período da fatura
+    const periodo = getPeriodoFatura(ano, mes, diaVencimentoCartao);
+    
+    // Filtrar por período
+    const gastos = creditoSaidas.filter(s => {
+        const date = new Date(s.data + 'T00:00:00');
+        return date >= periodo.inicio && date <= periodo.fim;
+    });
+    
+    return gastos;
+}
+
+// Mostrar tabela de gastos do cartão de crédito
+function mostrarTabelaGastosCartao(gastos, label, anoFat, mesFat) {
+    const container = document.getElementById('tabelaGastosCartaoContainer');
+    const title = document.getElementById('tabelaGastosCartaoTitle');
+    const subtitle = document.getElementById('tabelaGastosCartaoSubtitle');
+    const tableBody = document.getElementById('tabelaGastosCartaoBody');
+    
+    if (!container || !title || !tableBody) {
+        console.error('Elementos do modal de gastos não encontrados');
+        return;
+    }
+    
+    // Obter período da fatura para exibir no subtítulo
+    let periodoText = '';
+    if (anoFat !== undefined && mesFat !== undefined) {
+        const periodo = getPeriodoFatura(anoFat, mesFat, diaVencimentoCartao);
+        const inicioStr = periodo.inicio.toLocaleDateString('pt-BR');
+        const fimStr = periodo.fim.toLocaleDateString('pt-BR');
+        periodoText = `${inicioStr} até ${fimStr}`;
+    }
+    
+    // Atualizar título e subtítulo
+    title.textContent = `Gastos no Cartão de Crédito - ${label.replace(' - Fatura', '')}`;
+    if (subtitle) {
+        subtitle.textContent = `Período: ${periodoText} (Vencimento: dia ${diaVencimentoCartao})`;
+        subtitle.classList.remove('hidden');
+    }
+    
+    if (gastos.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                    <i class="fas fa-inbox text-4xl mb-2 block"></i>
+                    <p>Nenhum gasto encontrado para este período</p>
+                </td>
+            </tr>
+        `;
+    } else {
+        // Calcular total
+        const total = gastos.reduce((sum, g) => sum + (parseFloat(g.valor) || 0), 0);
+        
+        // Renderizar tabela
+        const sortedGastos = [...gastos].sort((a, b) => new Date(b.data) - new Date(a.data));
+        
+        tableBody.innerHTML = sortedGastos.map(g => `
+            <tr class="hover:bg-gray-50 transition">
+                <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">${formatDate(g.data)}</td>
+                <td class="px-4 py-3 text-sm text-gray-900">${g.descricao || '-'}</td>
+                <td class="px-4 py-3 text-sm text-gray-600">${g.loja || '-'}</td>
+                <td class="px-4 py-3 text-sm">
+                    ${g.parcelas > 1 
+                        ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                            <i class="fas fa-layer-group mr-1"></i>
+                            ${g.parcela_atual}/${g.parcelas}
+                           </span>` 
+                        : '<span class="text-gray-400">-</span>'}
+                </td>
+                <td class="px-4 py-3">
+                    <span class="badge-categoria">
+                        <i class="fas fa-tag text-red-500"></i>
+                        ${g.categoria}
+                    </span>
+                </td>
+                <td class="px-4 py-3 text-right font-semibold text-red-600 whitespace-nowrap">
+                    - ${formatCurrency(g.valor)}
+                </td>
+                <td class="px-4 py-3 text-center">
+                    <button 
+                        onclick='editSaida(${JSON.stringify(g).replace(/'/g, "\\'")}); fecharTabelaGastosCartao();'
+                        class="text-blue-500 hover:text-blue-700 mr-2 transition"
+                        title="Editar"
+                    >
+                        <i class="fas fa-edit"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+        
+        // Adicionar linha de total no footer
+        const footer = document.getElementById('tabelaGastosCartaoFooter');
+        if (footer) {
+            const footerTotal = document.getElementById('totalGastosCartaoFooter');
+            footerTotal.textContent = `- ${formatCurrency(total)}`;
+            footer.classList.remove('hidden');
+        }
+    }
+    
+    // Mostrar container
+    container.classList.remove('hidden');
+    
+    // Scroll até o container
+    container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Fechar tabela de gastos do cartão de crédito
+function fecharTabelaGastosCartao() {
+    const container = document.getElementById('tabelaGastosCartaoContainer');
+    if (container) {
+        container.classList.add('hidden');
+    }
 }
 
 // Update all charts with filtered data
@@ -1051,147 +1212,87 @@ function getTopLojas(limit = 10) {
     };
 }
 
-// Get credit card installment data by due date
+// Get credit card installment data by due date (grouped by billing period)
 function getCartaoCreditoData() {
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth(); // 0-11
     
     // Filter only credit card expenses from ALL data (not filtered by period)
-    // This ensures we show all installments including future ones
     const creditoSaidas = saidas.filter(s => {
         const tipo = (s.tipo_pagamento || '').toLowerCase();
         return tipo.includes('credito') || tipo === 'crédito' || tipo === 'cartao';
     });
     
-    // Group by month
-    const monthlyCredito = {};
-    
-    creditoSaidas.forEach(s => {
-        const date = new Date(s.data + 'T00:00:00');
-        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        monthlyCredito[key] = (monthlyCredito[key] || 0) + (parseFloat(s.valor) || 0);
-    });
-    
-    // Generate labels for next 12 months including current month
+    // Generate labels and calculate totals for next 12 months (billing periods)
     const labels = [];
     const values = [];
     const backgroundColors = [];
     const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
     
+    // Determine which month should appear first based on today's date
+    // The current billing period is the one that includes today
+    // If today is after the due date, we're in the current month's billing period
+    // If today is before the due date, we're in the previous month's billing period
+    
+    const today = new Date();
+    const todayDay = today.getDate();
+    const dueDay = diaVencimentoCartao;
+    
+    // Calculate the billing period we're currently in
+    let startMonth = currentMonth;
+    let startYear = currentYear;
+    
+    // If we're before the due date, we're in the previous month's billing period
+    // (which started in the month before that)
+    if (todayDay < dueDay) {
+        startMonth = currentMonth - 1;
+        if (startMonth < 0) {
+            startMonth = 11;
+            startYear = currentYear - 1;
+        }
+    }
+    
+    // Generate 12 billing periods starting from the current/most recent one
     for (let i = 0; i < 12; i++) {
-        let month = currentMonth + i;
-        let year = currentYear;
+        let month = startMonth + i;
+        let year = startYear;
         
         if (month > 11) {
             month = month - 12;
-            year = currentYear + 1;
+            year = startYear + Math.floor((startMonth + i) / 12);
         }
         
-        const key = `${year}-${String(month + 1).padStart(2, '0')}`;
-        const label = `${monthNames[month]}/${year.toString().slice(2)}`;
+        // Get billing period for this month
+        const periodo = getPeriodoFatura(year, month, diaVencimentoCartao);
+        
+        // Calculate total for this billing period
+        let total = 0;
+        creditoSaidas.forEach(s => {
+            const date = new Date(s.data + 'T00:00:00');
+            if (date >= periodo.inicio && date <= periodo.fim) {
+                total += parseFloat(s.valor) || 0;
+            }
+        });
+        
+        // Format label
+        const label = `${monthNames[month]}/${year.toString().slice(2)} - Fatura`;
         
         labels.push(label);
-        values.push(monthlyCredito[key] || 0);
+        values.push(total);
         
-        // Current month gets different color (blue), future months get purple
-        if (i === 0) {
-            backgroundColors.push(colors.blue[0]);
+        // Check if today's date falls within this billing period
+        const isCurrentPeriod = today >= periodo.inicio && today <= periodo.fim;
+        
+        // Current billing period (containing today) gets different color (emerald green), others get purple
+        if (isCurrentPeriod) {
+            backgroundColors.push(colors.emerald[0]);
         } else {
             backgroundColors.push(colors.purple[1]);
         }
     }
     
     return { labels, values, backgroundColors };
-}
-
-async function loadCartaoMeses() {
-    try {
-        // Buscar dados do cartão para saber o dia de vencimento
-        const res = await fetch('http://localhost:3000/cartao');
-        const cartao = await res.json();
-        
-        // Buscar todos os meses únicos das tabelas de entradas e saídas
-        const allDates = new Set();
-        
-        // Adicionar datas da tabela entradas
-        entradas.forEach(e => {
-            if (e.data) allDates.add(e.data.substring(0, 7)); // YYYY-MM
-        });
-        
-        // Adicionar datas da tabela saidas
-        saidas.forEach(s => {
-            if (s.data) allDates.add(s.data.substring(0, 7)); // YYYY-MM
-        });
-        
-        // Converter para array e ordenar
-        const uniqueMonths = Array.from(allDates).sort();
-        
-        const select = document.getElementById('cartaoMes');
-        select.innerHTML = '<option value="">Todos</option>';
-        
-        // Adicionar opções para cada mês único
-        uniqueMonths.forEach(monthStr => {
-            const [year, month] = monthStr.split('-');
-            const optionValue = monthStr;
-            const optionText = `${String(month).padStart(2, '0')}/${year}`;
-            const option = document.createElement('option');
-            option.value = optionValue;
-            option.text = optionText;
-            select.appendChild(option);
-        });
-    } catch (error) {
-        console.error('Erro ao carregar meses do cartão:', error);
-    }
-}
-
-let currentCartaoMonth = null;
-
-async function applyCartaoPeriod() {
-    try {
-        // Buscar dados do cartão para saber o dia de vencimento
-        const res = await fetch('http://localhost:3000/cartao');
-        const cartao = await res.json();
-        
-        const diaVencimento = cartao ? parseInt(cartao.dia_vencimento) : 10; // Default para 10 se não configurado
-        
-        const select = document.getElementById('cartaoMes');
-        const selectedMonth = select.value;
-
-        // Se "Todos" for selecionado, remove o filtro do cartão
-        if (!selectedMonth) {
-            currentCartaoMonth = null;
-            // Restaurar filtro do período atual (semestre)
-            document.getElementById('btnSemester').classList.add('active');
-            applyFilter();
-            updateDashboard();
-            return;
-        }
-
-        currentCartaoMonth = selectedMonth;
-
-        // Filtrar baseado no vencimento do cartão
-        const [year, month] = currentCartaoMonth.split('-'); // formato: "YYYY-MM"
-        const startDate = new Date(year, parseInt(month) - 1, diaVencimento + 1);
-        const endDate = new Date(year, parseInt(month), diaVencimento);
-
-        console.log(`Filtrando de ${startDate.toISOString()} até ${endDate.toISOString()}`);
-        
-        // Filtrar entradas e saídas baseado no período do cartão
-        filteredEntradas = entradas.filter(e => {
-            const date = new Date(e.data + 'T00:00:00');
-            return date >= startDate && date <= endDate;
-        });
-
-        filteredSaidas = saidas.filter(s => {
-            const date = new Date(s.data + 'T00:00:00');
-            return date >= startDate && date <= endDate;
-        });
-
-        updateDashboard();
-    } catch (error) {
-        console.error('Erro ao aplicar filtro do cartão:', error);
-    }
 }
 
 // Carregar categorias de entrada do banco de dados
@@ -1483,81 +1584,6 @@ async function carregarFiltrosDinamicosTabela() {
             tiposPagamentoUnicos.map(tipo => `<option value="${tipo}">${tipo}</option>`).join('');
         selectTipoPagamento.value = valorAtual;
     }
-    
-    // Preencher select de Fatura (apenas para cartão de crédito)
-    const selectFatura = document.getElementById('filtroFatura');
-    if (selectFatura) {
-        const valorAtual = selectFatura.value;
-        
-        // Extrair meses únicos das saídas com cartão de crédito
-        const creditoSaidas = todasSaidas.filter(s => {
-            const tipo = (s.tipo_pagamento || '').toLowerCase();
-            return tipo.includes('credito') || tipo === 'crédito' || tipo === 'cartao';
-        });
-        
-        const mesesCredito = [...new Set(creditoSaidas.map(s => {
-            if (s.data) return s.data.substring(0, 7); // YYYY-MM
-            return null;
-        }).filter(Boolean))].sort().reverse();
-        
-        // Criar opções formatadas
-        const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-        const options = '<option value="">Todas as Faturas</option>' +
-            mesesCredito.map(monthStr => {
-                const [year, month] = monthStr.split('-');
-                const displayName = `${monthNames[parseInt(month) - 1]}/${year}`;
-                return `<option value="${monthStr}">${displayName}</option>`;
-            }).join('');
-        
-        selectFatura.innerHTML = options;
-        selectFatura.value = valorAtual;
-    }
-    
-    // Carregar cartões para o filtro de cartão
-    await carregarCartoes();
-}
-
-// Carregar todos os cartões do banco de dados
-async function carregarCartoes() {
-    try {
-        const res = await fetch('http://localhost:3000/cartao');
-        const result = await res.json();
-        cartoes = result.data || [];
-        
-        const selectCartao = document.getElementById('filtroCartao');
-        if (selectCartao && cartoes.length > 0) {
-            const valorAtual = selectCartao.value;
-            selectCartao.innerHTML = '<option value="">Selecione o cartão...</option>' +
-                cartoes.map(cartao => `<option value="${cartao.id}">${cartao.nome_cartao} (Venc: ${cartao.dia_vencimento})</option>`).join('');
-            selectCartao.value = valorAtual;
-        }
-    } catch (error) {
-        console.error('Erro ao carregar cartões:', error);
-    }
-}
-
-// Verificar se a seleção de fatura requer seleção de cartão
-function verificarExibicaoFiltroCartao() {
-    const selectFatura = document.getElementById('filtroFatura');
-    const selectCartao = document.getElementById('filtroCartao');
-    
-    if (!selectFatura || !selectCartao) return;
-    
-    const faturaSelecionada = selectFatura.value;
-    
-    if (faturaSelecionada) {
-        // Mostrar dropdown de cartão
-        selectCartao.classList.remove('hidden');
-        
-        // Se ainda não tem cartão selecionado, selecionar o primeiro
-        if (!selectCartao.value && cartoes.length > 0) {
-            selectCartao.value = cartoes[0].id;
-        }
-    } else {
-        // Esconder dropdown de cartão
-        selectCartao.classList.add('hidden');
-        selectCartao.value = '';
-    }
 }
 
 // Aplicar filtros na tabela de saídas
@@ -1566,17 +1592,12 @@ async function aplicarFiltrosTabela() {
     filtroTabelaLoja = document.getElementById('filtroLoja')?.value || '';
     filtroTabelaCategoria = document.getElementById('filtroCategoria')?.value || '';
     filtroTabelaTipoPagamento = document.getElementById('filtroTipoPagamento')?.value || '';
-    const filtroFatura = document.getElementById('filtroFatura')?.value || '';
-    const filtroCartaoId = document.getElementById('filtroCartao')?.value || '';
-    
-    // Verificar se deve mostrar/esconder o dropdown de cartão
-    verificarExibicaoFiltroCartao();
     
     // Renderizar tabela com filtros aplicados
-    renderTabelaSaidas(filtroFatura, filtroCartaoId);
+    renderTabelaSaidas();
     
     // Atualizar contagem
-    await atualizarContagemFiltrada(filtroFatura, filtroCartaoId);
+    await atualizarContagemFiltrada();
 }
 
 // Limpar filtros da tabela de saídas
@@ -1589,17 +1610,10 @@ function limparFiltrosTabela() {
     const selectLoja = document.getElementById('filtroLoja');
     const selectCategoria = document.getElementById('filtroCategoria');
     const selectTipoPagamento = document.getElementById('filtroTipoPagamento');
-    const selectFatura = document.getElementById('filtroFatura');
-    const selectCartao = document.getElementById('filtroCartao');
     
     if (selectLoja) selectLoja.value = '';
     if (selectCategoria) selectCategoria.value = '';
     if (selectTipoPagamento) selectTipoPagamento.value = '';
-    if (selectFatura) selectFatura.value = '';
-    if (selectCartao) {
-        selectCartao.value = '';
-        selectCartao.classList.add('hidden');
-    }
     
     // Renderizar tabela sem filtros
     renderTabelaSaidas();
@@ -1609,7 +1623,7 @@ function limparFiltrosTabela() {
 }
 
 // Atualizar contagem de registros filtrados
-async function atualizarContagemFiltrada(filtroFatura = '', filtroCartaoId = '') {
+async function atualizarContagemFiltrada() {
     const total = filteredSaidas.length;
     
     // Calcular filtrados
@@ -1623,37 +1637,6 @@ async function atualizarContagemFiltrada(filtroFatura = '', filtroCartaoId = '')
     }
     if (filtroTabelaTipoPagamento) {
         filtrados = filtrados.filter(s => s.tipo_pagamento === filtroTabelaTipoPagamento);
-    }
-    if (filtroFatura && filtroCartaoId) {
-        // Filtrar por mês de fatura E cartão selecionado (considerando dia de vencimento)
-        const cartao = cartoes.find(c => c.id == filtroCartaoId);
-        const diaVencimento = cartao ? parseInt(cartao.dia_vencimento) : 10;
-        
-        const [year, month] = filtroFatura.split('-');
-        const selectedYear = parseInt(year);
-        const selectedMonth = parseInt(month) - 1;
-        
-        const startDate = new Date(selectedYear, selectedMonth, diaVencimento + 1);
-        const endDate = new Date(selectedYear, selectedMonth + 1, diaVencimento);
-        
-        filtrados = filtrados.filter(s => {
-            const tipo = (s.tipo_pagamento || '').toLowerCase();
-            const isCredito = tipo.includes('credito') || tipo === 'crédito' || tipo === 'cartao';
-            if (!isCredito) return false;
-            if (s.data) {
-                const date = new Date(s.data + 'T00:00:00');
-                return date >= startDate && date <= endDate;
-            }
-            return false;
-        });
-    } else if (filtroFatura) {
-        filtrados = filtrados.filter(s => {
-            const tipo = (s.tipo_pagamento || '').toLowerCase();
-            const isCredito = tipo.includes('credito') || tipo === 'crédito' || tipo === 'cartao';
-            if (!isCredito) return false;
-            if (s.data && s.data.startsWith(filtroFatura)) return true;
-            return false;
-        });
     }
     
     document.getElementById('contagemTotal').textContent = total;
