@@ -1,6 +1,20 @@
-const sqlite3 = require('sqlite3').verbose();
 
-const db = new sqlite3.Database('./database.db');
+const sqlite3 = require('sqlite3').verbose();
+const os = require('os');
+const path = require('path');
+
+// Usar pasta de dados do usuário para o banco de dados
+const appDataDir = process.env.HOME || process.env.USERPROFILE;
+const dataDir = path.join(appDataDir, 'Library', 'Application Support', 'ControleFinanceiro');
+
+// Criar diretório se não existir
+const fs = require('fs');
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+
+const dbPath = path.join(dataDir, 'database.db');
+const db = new sqlite3.Database(dbPath);
 
 // Criar tabelas
 db.serialize(() => {

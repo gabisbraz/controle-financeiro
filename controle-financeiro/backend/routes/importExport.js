@@ -1,7 +1,11 @@
+
+
 const express = require('express');
 const multer = require('multer');
 const XLSX = require('xlsx');
 const fs = require('fs');
+const os = require('os');
+const path = require('path');
 const db = require('../db');
 const { 
   formatarData,
@@ -12,7 +16,17 @@ const {
 } = require('../helpers');
 
 const router = express.Router();
-const upload = multer({ dest: 'uploads/' });
+
+// Usar pasta temporária do sistema para uploads (funciona no macOS app)
+const tempDir = os.tmpdir();
+const uploadDir = path.join(tempDir, 'controle-financeiro-uploads');
+
+// Criar diretório de uploads se não existir
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const upload = multer({ dest: uploadDir });
 
 // Preview Excel saidas
 router.post('/preview/saidas', upload.single('file'), (req, res) => {

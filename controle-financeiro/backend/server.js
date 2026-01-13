@@ -1,11 +1,16 @@
+
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 const PORT = 3000;
 
 app.use(cors());
 app.use(express.json());
+
+// Servir arquivos estáticos do frontend
+app.use(express.static(path.join(__dirname, '../frontend')));
 
 // Rotas
 const entradasRoutes = require('./routes/entradas');
@@ -30,8 +35,10 @@ app.use('/categorias/entradas', categoriasEntradasRoutes);
 app.use('/lojas', lojasRoutes);
 app.use('/database', databaseRoutes);
 
-// Root
-app.get('/', (req, res) => res.send('API Controle Financeiro rodando 🚀'));
+// Root - servir index.html como página principal
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/index.html'));
+});
 
 // Start
 app.listen(PORT, () => console.log(`🚀 API rodando em http://localhost:${PORT}`));
