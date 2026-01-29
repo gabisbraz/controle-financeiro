@@ -105,6 +105,53 @@ Sistema web completo para gerenciamento de finanças pessoais, permitindo regist
 - **Font Awesome** - Ícones
 - **Google Fonts (Inter)** - Tipografia
 
+## 🚀 Como Executar o Projeto (Primeira Vez)
+
+### Pré-requisitos
+- **Node.js** (versão 14 ou superior) instalado no computador
+- **npm** (gerenciador de pacotes do Node.js)
+
+### Passo a Passo
+
+1. **Acesse a pasta do backend:**
+   ```bash
+   cd finApp/backend
+   ```
+
+2. **Instale as dependências:**
+   ```bash
+   npm install
+   ```
+   Aguarde a instalação de todos os pacotes necessários.
+
+3. **Inicie o servidor:**
+   ```bash
+   npm start
+   ```
+   Ou:
+   ```bash
+   node server.js
+   ```
+
+4. **Acesse o aplicativo:**
+   Abra o navegador e acesse: **http://localhost:3000**
+
+### Estrutura de Pastas Após Instalação
+```
+finApp/
+├── backend/
+│   ├── node_modules/     # Dependências instaladas
+│   ├── routes/
+│   ├── db.js
+│   ├── server.js
+│   └── package.json
+└── frontend/
+    ├── index.html
+    ├── dashboard.html
+    ├── css/
+    └── js/
+```
+
 ## 🚀 Como Usar
 
 1. Acesse a página principal (`index.html`)
@@ -113,23 +160,6 @@ Sistema web completo para gerenciamento de finanças pessoais, permitindo regist
 4. Clique em "Dashboard" no menu para ver os gráficos
 5. Use os filtros de período para analisar diferentes intervalos de tempo
 
-## 📱 Responsividade
-
-O sistema é totalmente responsivo e funciona em:
-- ✅ Desktop
-- ✅ Tablet
-- ✅ Mobile
-
-## 🔜 Próximos Passos (Melhorias Futuras)
-
-- [ ] Edição de registros existentes
-- [ ] Exportação de dados (CSV/PDF)
-- [ ] Metas financeiras mensais
-- [ ] Categorias personalizadas
-- [ ] Importação de extratos bancários
-- [ ] Gráfico de evolução patrimonial
-- [ ] Alertas de gastos por categoria
-- [ ] Modo escuro
 
 ## 📝 Licença
 
