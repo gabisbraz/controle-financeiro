@@ -1,0 +1,279 @@
+/* Index Page Custom Styles */
+
+/* Modal animation */
+#modalDelete.show {
+    display: flex !important;
+}
+
+#modalDelete .bg-white {
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Card hover effect */
+.bg-white.rounded-xl:hover {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* Pulse animation for summary cards */
+.pulse-once {
+    animation: pulse 0.5s ease;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.02);
+    }
+}
+
+/* Modal overlay */
+.fixed.inset-0.bg-black\/50 {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Table headers sticky */
+.bg-gray-50.sticky.top-0.z-10 {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+/* Toast notification */
+#toast {
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+    background-color: #10b981;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    z-index: 50;
+    transform: translateY(100%);
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+#toast.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+/* Edit buttons */
+.edit-btn {
+    color: #3b82f6;
+    background: transparent;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.edit-btn:hover {
+    background-color: #eff6ff;
+    transform: scale(1.1);
+}
+
+/* Delete confirmation modal */
+#modalDelete .bg-white {
+    background-color: white;
+    border-radius: 0.75rem;
+    max-width: 28rem;
+    width: 100%;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+#modalDelete .text-center {
+    text-align: center;
+}
+
+#modalDelete .bg-red-100 {
+    background-color: #fee2e2;
+    width: 4rem;
+    height: 4rem;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+}
+
+#modalDelete .bg-red-100 i {
+    color: #ef4444;
+    font-size: 1.5rem;
+}
+
+#modalDelete h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 0.5rem;
+}
+
+#modalDelete p {
+    color: #4b5563;
+    margin-bottom: 1.5rem;
+}
+
+#modalDelete .flex.gap-3 {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+}
+
+#modalDelete button {
+    padding: 0.5rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+#modalDelete button#btnCancelDelete {
+    background-color: #e5e7eb;
+    color: #374151;
+}
+
+#modalDelete button#btnCancelDelete:hover {
+    background-color: #d1d5db;
+}
+
+#modalDelete button#btnConfirmDelete {
+    background-color: #ef4444;
+    color: white;
+}
+
+#modalDelete button#btnConfirmDelete:hover {
+    background-color: #dc2626;
+}
+
+/* Toast icon */
+#toastIcon {
+    display: flex;
+    align-items: center;
+}
+
+/* Summary card border colors */
+.border-l-4.border-emerald-500 {
+    border-left-color: #10b981;
+}
+
+.border-l-4.border-red-500 {
+    border-left-color: #ef4444;
+}
+
+.border-l-4.border-blue-500 {
+    border-left-color: #3b82f6;
+}
+
+/* Table footers sticky */
+tfoot.bg-gray-100.sticky.bottom-0 {
+    position: sticky;
+    bottom: 0;
+    background-color: #f3f4f6;
+}
+
+/* Whitespace nowrap */
+.whitespace-nowrap {
+    white-space: nowrap;
+}
+
+/* Header gradient */
+.bg-gradient-to-r.from-emerald-600.to-teal-600 {
+    background-image: linear-gradient(to right, #059669, #0d9488);
+}
+
+header.fixed.top-0.left-0.right-0.z-50 {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+}
+
+/* Navigation links hover */
+nav.flex.gap-4 a:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+nav.flex.gap-4 a.bg-white\/20:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Header shadow */
+.shadow-lg {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Span badge backgrounds */
+span#countEntradas,
+span#countSaidas {
+    background-color: rgba(255, 255, 255, 0.2);
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+}
+
+/* Disabled buttons */
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* Input placeholder */
+input::placeholder {
+    color: #9ca3af;
+}
+
+/* Tfoot font styling */
+tfoot tr.font-bold {
+    font-weight: 700;
+}
+
+tfoot tr.bg-gray-200 {
+    background-color: #e5e7eb;
+}
+
+/* Table divide */
+.divide-y > :not([hidden]) ~ :not([hidden]) {
+    border-top-width: 1px;
+    border-color: rgba(229, 231, 235, 1);
+}
+
+/* Action buttons hover */
+.action-btn {
+    padding: 0.375rem;
+    border-radius: 0.25rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.action-btn:hover {
+    background-color: #f3f4f6;
+    transform: scale(1.1);
+}
+
+/* Backdrop blur for modal */
+@media (backdrop-filter: blur(4px)) {
+    .bg-black\/50 {
+        backdrop-filter: blur(4px);
+    }
+}
+

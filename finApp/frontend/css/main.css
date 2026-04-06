@@ -1,4 +1,4 @@
-/* Custom Styles for Finance Control */
+/* Main Shared Custom Styles */
 
 /* Smooth scrolling */
 html {
@@ -50,35 +50,10 @@ tbody tr:hover {
     background-color: #f9fafb;
 }
 
-/* Card hover effect */
-.bg-white.rounded-xl:hover {
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-}
-
 /* Toast animation */
 #toast.show {
     transform: translateY(0);
     opacity: 1;
-}
-
-/* Modal animation */
-#modalDelete.show {
-    display: flex !important;
-}
-
-#modalDelete .bg-white {
-    animation: modalSlideIn 0.3s ease;
-}
-
-@keyframes modalSlideIn {
-    from {
-        transform: scale(0.9);
-        opacity: 0;
-    }
-    to {
-        transform: scale(1);
-        opacity: 1;
-    }
 }
 
 /* Badge styles for payment types */
@@ -161,28 +136,6 @@ tbody tr:hover {
     animation: spin 1s linear infinite;
 }
 
-.margingtop-table {
-    margin-top: 1.5rem;
-}
-
-.tab-btn {
-    padding: 1rem 1.5rem;
-    font-weight: 600;
-    color: #4b5563;
-    border-bottom: 3px solid transparent;
-    transition: all 0.2s;
-}
-
-.tab-btn:hover {
-    background-color: #f9fafb;
-}
-
-.tab-btn.active {
-    color: #059669;
-    border-bottom-color: #059669;
-}
-
-
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
@@ -197,21 +150,6 @@ tbody tr:hover {
 .valor-negativo {
     color: #dc2626;
     font-weight: 600;
-}
-
-/* Responsive table */
-@media (max-width: 640px) {
-    table {
-        font-size: 0.875rem;
-    }
-    
-    th, td {
-        padding: 0.5rem !important;
-    }
-    
-    .hide-mobile {
-        display: none !important;
-    }
 }
 
 /* Empty state */
@@ -240,16 +178,8 @@ input[type="number"] {
     -moz-appearance: textfield;
 }
 
-/* Pulse animation for summary cards */
-.pulse-once {
-    animation: pulse 0.5s ease;
+/* Marging top for tables */
+.margingtop-table {
+    margin-top: 1.5rem;
 }
 
-@keyframes pulse {
-    0%, 100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.02);
-    }
-}
