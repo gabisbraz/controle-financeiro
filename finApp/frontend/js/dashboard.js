@@ -51,6 +51,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Setup event listeners for modals
     setupModalListeners();
+    
+    atualizarPeriodoInfo('month');
 });
 
 // Setup modal event listeners
@@ -145,6 +147,7 @@ function setPeriod(period) {
         currentPeriod = 'all';
         document.querySelectorAll('.period-btn').forEach(btn => btn.classList.remove('active'));
         document.getElementById('btnAll')?.classList.add('active');
+        atualizarPeriodoInfo('all');
         applyFilter(); // mostra todos os dados
         updateDashboard();
         return;
@@ -156,13 +159,18 @@ function setPeriod(period) {
     document.querySelectorAll('.period-btn').forEach(btn => {
         btn.classList.remove('active');
     });
-    document.getElementById(`btn${period.charAt(0).toUpperCase() + period.slice(1)}`).classList.add('active');
+    const btnId = `btn${period.charAt(0).toUpperCase() + period.slice(1)}`;
+    const periodBtn = document.getElementById(btnId);
+    if (periodBtn) {
+        periodBtn.classList.add('active');
+    }
     
     // Toggle charts visibility based on period
     toggleMonthlyCharts();
     
     applyFilter();
     updateDashboard();
+    atualizarPeriodoInfo(period);
 }
 
 // Toggle visibility of monthly charts (Entradas vs Saídas por Mês and Fluxo de Caixa)
@@ -232,6 +240,33 @@ function applyFilter(customStart = null, customEnd = null) {
                 startDate = new Date(now.getFullYear(), now.getMonth(), 1);
                 endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
                 break;
+            case 'creditoMes':
+                // Mês atual (exceto crédito) + fatura crédito mais recente
+                const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+                
+                // 1. Saídas do mês atual EXCETO cartão de crédito
+                const monthSaidasNoCredito = saidas.filter(s => {
+                    const date = new Date(s.data + 'T00:00:00');
+                    const isCredito = (s.tipo_pagamento || '').toLowerCase().includes('credito') || 
+                                     s.tipo_pagamento?.toLowerCase() === 'crédito' || 
+                                     s.tipo_pagamento?.toLowerCase() === 'cartao';
+                    return date >= monthStart && date <= monthEnd && !isCredito;
+                });
+                
+                // 2. Gastos cartão de crédito da fatura mais recente
+                const recentFaturaCredito = getGastosCartaoCreditoPorFaturaMostRecent();
+                
+                // Combinar
+                filteredSaidas = [...monthSaidasNoCredito, ...recentFaturaCredito];
+                
+                // Entradas: mesmo período do mês atual
+                filteredEntradas = entradas.filter(e => {
+                    const date = new Date(e.data + 'T00:00:00');
+                    return date >= monthStart && date <= monthEnd;
+                });
+                return; // Não precisa das outras lógicas
+                
             case 'last12months':
                 startDate = new Date(now.getFullYear(), now.getMonth() - 11, 1);
                 endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
@@ -258,6 +293,69 @@ function applyFilter(customStart = null, customEnd = null) {
     });
 }
 
+// Função para atualizar indicador visual do período atual
+function atualizarPeriodoInfo(period) {
+    const infoDiv = document.getElementById('periodoInfo');
+    const textoSpan = document.getElementById('periodoTexto');
+    
+    if (!infoDiv || !textoSpan) return;
+    
+    let texto = '';
+    const now = new Date();
+    const diaVenc = diaVencimentoCartao;
+    
+    switch(period) {
+        case 'month':
+            const mesAtual = now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+            texto = `Período: ${mesAtual}`;
+            break;
+        case 'creditoMes':
+            const mesAtualNome = now.toLocaleDateString('pt-BR', { month: 'long' });
+            // Encontrar fatura aberta atual (igual ao filtro)
+            let faturaMonth = now.getMonth();
+            let faturaYear = now.getFullYear();
+            const todayDay2 = now.getDate();
+            
+            for (let offset = 0; offset < 3; offset++) {
+                let testMonth = faturaMonth - offset;
+                let testYear = faturaYear;
+                
+                if (testMonth < 0) {
+                    testMonth += 12;
+                    testYear--;
+                }
+                
+                const periodoFatura = getPeriodoFatura(testYear, testMonth, diaVenc);
+                
+                if (now >= periodoFatura.inicio && now <= periodoFatura.fim) {
+                    faturaMonth = testMonth;
+                    faturaYear = testYear;
+                    break;
+                }
+            }
+            
+            const periodoFatura = getPeriodoFatura(faturaYear, faturaMonth, diaVenc);
+            const dataInicio = periodoFatura.inicio.toLocaleDateString('pt-BR');
+            const dataFim = periodoFatura.fim.toLocaleDateString('pt-BR');
+            texto = `Mês atual (sem crédito) + Fatura aberta: ${dataInicio} até ${dataFim}`;
+            break;
+        case 'last12months':
+            texto = '12 últimos meses';
+            break;
+        case 'next12months':
+            texto = '12 próximos meses';
+            break;
+        case 'all':
+            texto = 'Todos os períodos';
+            break;
+        default:
+            texto = `Período: ${period}`;
+    }
+    
+    textoSpan.textContent = texto;
+    infoDiv.classList.remove('hidden');
+}
+
 // Update all dashboard elements
 function updateDashboard() {
     updateSummaryCards();
@@ -267,6 +365,7 @@ function updateDashboard() {
     // Atualizar filtros e contagem
     carregarFiltrosDinamicosTabela();
     atualizarContagemFiltrada();
+    atualizarPeriodoInfo(currentPeriod);
 }
 
 // Switch between tabs
@@ -1130,6 +1229,48 @@ function fecharTabelaGastosCartao() {
     if (container) {
         container.classList.add('hidden');
     }
+}
+
+// Obter gastos cartão de crédito da fatura mais recente (para filtro Crédito + Mês)
+function getGastosCartaoCreditoPorFaturaMostRecent() {
+    const now = new Date();
+    
+    // Encontrar a fatura mais recente ABERTA (que contém hoje)
+    let candidateMonth = now.getMonth();
+    let candidateYear = now.getFullYear();
+    
+    // Testar últimos 3 meses para encontrar a fatura aberta atual
+    for (let offset = 0; offset < 3; offset++) {
+        let testMonth = candidateMonth - offset;
+        let testYear = candidateYear;
+        
+        if (testMonth < 0) {
+            testMonth += 12;
+            testYear--;
+        }
+        
+        const periodo = getPeriodoFatura(testYear, testMonth, diaVencimentoCartao);
+        
+        // Se hoje está dentro deste período de fatura, é a aberta atual
+        if (now >= periodo.inicio && now <= periodo.fim) {
+            candidateMonth = testMonth;
+            candidateYear = testYear;
+            break;
+        }
+    }
+    
+    const periodo = getPeriodoFatura(candidateYear, candidateMonth, diaVencimentoCartao);
+    
+    // Filtrar gastos crédito para este período de fatura
+    const creditoSaidas = saidas.filter(s => {
+        const tipo = (s.tipo_pagamento || '').toLowerCase();
+        return tipo.includes('credito') || tipo === 'crédito' || tipo === 'cartao';
+    });
+    
+    return creditoSaidas.filter(s => {
+        const date = new Date(s.data + 'T00:00:00');
+        return date >= periodo.inicio && date <= periodo.fim;
+    });
 }
 
 // Inicializar tabela de gastos do cartão de crédito com o período atual (fatura atual)
