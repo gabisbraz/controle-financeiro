@@ -1,0 +1,84 @@
+<div class="expenses-container" style="padding: 20px;">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Controle Financeiro - Despesas</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <!-- Form for Add/Edit -->
+      <form [formGroup]="expenseForm" (ngSubmit)="saveExpense()" #form="ngForm">
+        <div class="form-row">
+          <mat-form-field appearance="fill">
+            <mat-label>Data</mat-label>
+            <input matInput [matDatepicker]="picker" formControlName="data">
+            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+          </mat-form-field>
+          <mat-form-field appearance="fill">
+            <mat-label>Loja</mat-label>
+            <input matInput formControlName="loja">
+          </mat-form-field>
+        </div>
+        <div class="form-row">
+          <mat-form-field appearance="fill">
+            <mat-label>Descrição</mat-label>
+            <input matInput formControlName="descricao">
+          </mat-form-field>
+          <mat-form-field appearance="fill">
+            <mat-label>Categoria</mat-label>
+            <mat-select formControlName="categoria">
+              <mat-option *ngFor="let cat of categories" [value]="cat">{{cat}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="form-row">
+          <mat-form-field appearance="fill">
+            <mat-label>Preço</mat-label>
+            <input matInput type="number" formControlName="preco">
+            <mat-label>R$</mat-label>
+          </mat-form-field>
+          <mat-form-field appearance="fill">
+            <mat-label>Pagamento</mat-label>
+            <input matInput formControlName="pagamento">
+          </mat-form-field>
+        </div>
+        <button mat-raised-button color="primary" type="submit" [disabled]="!expenseForm.valid">Salvar</button>
+        <button mat-button type="button" (click)="loadExpenses()">Recarregar</button>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- ag-Grid -->
+  <mat-card style="margin-top: 20px;">
+    <mat-card-header>
+      <mat-card-title>Lista de Despesas</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <ag-grid-angular
+        class="ag-theme-alpine"
+        style="height: 500px; width: 100%;"
+        [rowData]="expenses$ | async"
+        [columnDefs]="columnDefs"
+        [defaultColDef]="defaultColDef"
+        [animateRows]="true"
+        (gridReady)="onGridReady($event)"
+        rowSelection="multiple">
+      </ag-grid-angular>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<style>
+  .form-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .form-row mat-form-field {
+    flex: 1;
+  }
+  .ag-theme-alpine {
+    --ag-background-color: white;
+    --ag-header-background-color: #f8f9fa;
+    --ag-odd-row-background-color: #f8f9fa;
+  }
+</style>
